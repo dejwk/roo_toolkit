@@ -1,90 +1,124 @@
+#pragma once
+
+#include <unordered_set>
+
+#include "Preferences.h"
 #include "WiFi.h"
+#include "roo_scheduler.h"
 #include "roo_toolkit/wifi/interface.h"
-#include "roo_toolkit/wifi/network_details.h"
 
 namespace roo_toolkit {
 namespace wifi {
 
-static AuthMode authMode(wifi_auth_mode_t mode) {
-  switch (mode) {
-    case ::WIFI_AUTH_OPEN:
-      return WIFI_AUTH_OPEN;
-    case ::WIFI_AUTH_WEP:
-      return WIFI_AUTH_WEP;
-    case ::WIFI_AUTH_WPA_PSK:
-      return WIFI_AUTH_WPA_PSK;
-    case ::WIFI_AUTH_WPA2_PSK:
-      return WIFI_AUTH_WPA2_PSK;
-    case ::WIFI_AUTH_WPA_WPA2_PSK:
-      return WIFI_AUTH_WPA_WPA2_PSK;
-    case ::WIFI_AUTH_WPA2_ENTERPRISE:
-      return WIFI_AUTH_WPA2_ENTERPRISE;
-    default:
-      return WIFI_AUTH_UNKNOWN;
-  }
-}
+class ArduinoStore : public Store {
+ public:
+  ArduinoStore() : preferences_() {}
+
+  void begin() { preferences_.begin("roo/t/wifi", false); }
+
+  ~ArduinoStore() { preferences_.end(); }
+
+  bool getIsInterfaceEnabled() override;
+
+  void setIsInterfaceEnabled(bool enabled) override;
+
+  std::string getDefaultSSID() override;
+
+  void setDefaultSSID(const std::string& ssid) override;
+
+  bool getPassword(const std::string& ssid, std::string& password) override;
+
+  void setPassword(const std::string& ssid,
+                   const std::string& password) override;
+
+  void clearPassword(const std::string& ssid) override;
+
+ private:
+  Preferences preferences_;
+};
 
 class ArduinoInterface : public Interface {
  public:
-  ArduinoInterface() { WiFi.mode(WIFI_STA); }
+  ArduinoInterface(roo_scheduler::Scheduler& scheduler);
 
-  bool getApInfo(NetworkDetails* info) const override {
-    if (!WiFi.isConnected()) return false;
-    auto ssid = WiFi.SSID();
-    memcpy(info->ssid, ssid.c_str(), ssid.length());
-    info->ssid[ssid.length() + 1] = 0;
-    info->authmode = WIFI_AUTH_UNKNOWN; //authMode(WiFi.encryptionType());
-    info->rssi = WiFi.RSSI();
-    auto mac = WiFi.macAddress();
-    memcpy(info->bssid, mac.c_str(), 6);
-    info->primary = WiFi.channel();
-    info->group_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
-    info->pairwise_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
-    info->use_11b = false;
-    info->use_11g = false;
-    info->use_11n = false;
-    info->supports_wps = false;
-  }
+  void begin();
 
-  bool startScan() override {
-    return WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING;
-  }
+  bool getApInfo(NetworkDetails* info) const override;
 
-  bool scanCompleted() const override { return WiFi.scanComplete() >= 0; }
+  bool startScan() override;
+
+  bool scanCompleted() const override;
 
   bool getScanResults(std::vector<NetworkDetails>* list,
-                      int max_count) const override {
-    int16_t result = WiFi.scanComplete();
-    if (result < 0) return false;
-    if (max_count > result) {
-      max_count = result;
-    }
-    list->clear();
-    for (int i = 0; i < max_count; ++i) {
-      NetworkDetails info;
-      // String ssid;
-      // uint8_t encryptionType;
-      // int32_t rssi;
-      // WiFi.getNetworkInfo(i, ssid, encryptionType, &RSSI, uint8_t* &BSSID, int32_t &channel);
+                      int max_count) const override;
 
-      auto ssid = WiFi.SSID(i);
-      memcpy(info.ssid, ssid.c_str(), ssid.length());
-      info.ssid[ssid.length()] = 0;
-      info.authmode = authMode(WiFi.encryptionType(i));
-      info.rssi = WiFi.RSSI(i);
-      // auto mac = WiFi.macAddress(i);
-      // memcpy(info->bssid, mac.c_str(), 6);
-      info.primary = WiFi.channel(i);
-      info.group_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
-      info.pairwise_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
-      info.use_11b = false;
-      info.use_11g = false;
-      info.use_11n = false;
-      info.supports_wps = false;
-      list->push_back(std::move(info));
-    }
-    return true;
+  void disconnect() override;
+
+  void connect(const std::string& ssid, const std::string& passwd) override;
+
+  ConnectionStatus getStatus() override;
+
+  void addEventListener(EventListener* listener) override;
+
+  void removeEventListener(EventListener* listener) override;
+
+ private:
+  void checkStatusChanged();
+
+  roo_scheduler::Scheduler& scheduler_;
+
+  std::unordered_set<EventListener*> listeners_;
+
+  ConnectionStatus status_;
+  bool scanning_;
+  roo_scheduler::SingletonTask check_status_changed_;
+};
+
+class ArduinoWifi {
+ public:
+  ArduinoWifi(roo_scheduler::Scheduler& scheduler)
+      : store_(), interface_(scheduler), controller_(store_, interface_) {}
+
+  void begin() {
+    store_.begin();
+    interface_.begin();
+    controller_.begin();
   }
+
+  void setEnabled(bool enabled) { controller_.setEnabled(enabled); }
+
+  bool isEnabled() const { return controller_.isEnabled(); }
+
+  bool getApInfo(NetworkDetails* info) const {
+    return controller_.getApInfo(info);
+  }
+
+  void addEventListener(Interface::EventListener* listener) {
+    controller_.addEventListener(listener);
+  }
+
+  void removeEventListener(Interface::EventListener* listener) {
+    controller_.removeEventListener(listener);
+  }
+
+  bool startScan() { return controller_.startScan(); }
+
+  bool scanCompleted() const { return controller_.scanCompleted(); }
+
+  bool getScanResults(std::vector<NetworkDetails>* list, int max_count) const {
+    return controller_.getScanResults(list, max_count);
+  }
+
+  void connect(const std::string& ssid, const std::string& passwd) {
+    interface_.connect(ssid, passwd);
+  }
+
+  Store& store() { return store_; }
+
+ private:
+  ArduinoStore store_;
+  ArduinoInterface interface_;
+  Controller controller_;
 };
 
 }  // namespace wifi
