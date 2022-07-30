@@ -17,8 +17,8 @@ class WifiSetup {
             roo_windows::TextFieldEditor& editor,
             roo_scheduler::Scheduler& scheduler)
       : model_listener_(*this),
-        model_(wifi, model_listener_),
-        list_(env, model_, scheduler,
+        model_(wifi, scheduler, model_listener_),
+        list_(env, model_,
               [this](roo_windows::Task& task, const std::string& ssid) {
                 networkSelected(task, ssid);
               }),
@@ -38,6 +38,7 @@ class WifiSetup {
       wifi_.onEnableChanged(enabled);
     }
 
+    void onScanStarted() override { wifi_.onScanStarted(); }
     void onScanCompleted() override { wifi_.onScanCompleted(); }
 
     void onCurrentNetworkChanged() override { wifi_.onCurrentNetworkChanged(); }
@@ -54,6 +55,7 @@ class WifiSetup {
 
   void onEnableChanged(bool enabled) { list_.onEnableChanged(enabled); }
 
+  void onScanStarted() { list_.onScanStarted(); }
   void onScanCompleted() { list_.onScanCompleted(); }
 
   void onCurrentNetworkChanged() { list_.onCurrentNetworkChanged(); }

@@ -22,25 +22,25 @@ class WifiModel {
     virtual ~Listener() {}
 
     virtual void onEnableChanged(bool enabled) {}
+    virtual void onScanStarted() {}
     virtual void onScanCompleted() {}
     virtual void onCurrentNetworkChanged() {}
     virtual void onConnectionStateChanged(Interface::EventType type) {}
   };
 
-  WifiModel(Wifi& wifi, Listener& listener)
+  WifiModel(Wifi& wifi, roo_scheduler::Scheduler& scheduler, Listener& listener)
       : wifi_(wifi),
         current_network_(),
         current_network_index_(-1),
         current_network_status_(WL_NO_SSID_AVAIL),
         all_networks_(),
         wifi_listener_(*this),
-        model_listener_(listener) {
-     wifi_.addEventListener(&wifi_listener_);
+        model_listener_(listener),
+        start_scan_(&scheduler, [this]() { startScan(); }) {
+    wifi_.addEventListener(&wifi_listener_);
   }
 
-  ~WifiModel() {
-    wifi_.removeEventListener(&wifi_listener_);
-  }
+  ~WifiModel() { wifi_.removeEventListener(&wifi_listener_); }
 
   int otherScannedNetworksCount() const {
     int count = all_networks_.size();
@@ -48,9 +48,7 @@ class WifiModel {
     return count;
   }
 
-  const Network& currentNetwork() const {
-    return current_network_;
-  }
+  const Network& currentNetwork() const { return current_network_; }
 
   const Network* lookupNetwork(const std::string& ssid) const {
     for (const Network& net : all_networks_) {
@@ -71,7 +69,11 @@ class WifiModel {
   }
 
   bool startScan() {
-    return wifi_.startScan();
+    bool started = wifi_.startScan();
+    if (started) {
+      model_listener_.onScanStarted();
+    }
+    return started;
   }
 
   bool isScanCompleted() const { return wifi_.scanCompleted(); }
@@ -83,12 +85,27 @@ class WifiModel {
     model_listener_.onEnableChanged(enabled);
     if (enabled) {
       determineCurrentNetwork();
+      resume();
+    } else {
+      pause();
+    }
+  }
+
+  void pause() { start_scan_.cancel(); }
+
+  void resume() {
+    if (!wifi_.isEnabled()) return;
+    if (wifi_.scanCompleted()) {
+      model_listener_.onScanCompleted();
+      start_scan_.scheduleAfter(roo_time::Seconds(15));
+    } else {
+      startScan();
     }
   }
 
   void setPassword(const std::string& ssid, const std::string& passwd) {
     wifi_.store().setPassword(ssid, passwd);
-  }    
+  }
 
   void connect(const std::string& ssid, const std::string& passwd) {
     wifi_.connect(ssid, passwd);
@@ -128,7 +145,7 @@ class WifiModel {
     NetworkDetails current;
     if (wifi_.getApInfo(&current)) {
       current_network_.ssid = std::string((const char*)current.ssid,
-                                   strlen((const char*)current.ssid));
+                                          strlen((const char*)current.ssid));
       current_network_.open = (current.authmode == WIFI_AUTH_OPEN);
       current_network_.rssi = current.rssi;
       current_network_status_ = current.status;
@@ -171,7 +188,7 @@ class WifiModel {
     for (uint8_t i = 0; i < raw_count; ++i) indices[i] = i;
     std::sort(&indices[0], &indices[raw_count], [&](int a, int b) -> bool {
       int ssid_cmp = strncmp((const char*)raw_data[a].ssid,
-                            (const char*)raw_data[b].ssid, 33);
+                             (const char*)raw_data[b].ssid, 33);
       if (ssid_cmp < 0) return true;
       if (ssid_cmp > 0) return false;
       return raw_data[a].rssi > raw_data[b].rssi;
@@ -198,7 +215,8 @@ class WifiModel {
     for (uint8_t i = 0; i < dst; ++i) {
       NetworkDetails& src = raw_data[indices[i]];
       Network& dst = all_networks_[i];
-      dst.ssid = std::string((const char*)src.ssid, strlen((const char*)src.ssid));
+      dst.ssid =
+          std::string((const char*)src.ssid, strlen((const char*)src.ssid));
       dst.open = (src.authmode == WIFI_AUTH_OPEN);
       dst.rssi = src.rssi;
       if (dst.ssid == current_network_.ssid) {
@@ -206,6 +224,9 @@ class WifiModel {
       }
     }
     model_listener_.onScanCompleted();
+    if (wifi_.isEnabled()) {
+      start_scan_.scheduleAfter(roo_time::Seconds(15));
+    }
   }
 
   Wifi& wifi_;
@@ -215,6 +236,8 @@ class WifiModel {
   std::vector<Network> all_networks_;
   WifiListener wifi_listener_;
   Listener& model_listener_;
+
+  roo_scheduler::SingletonTask start_scan_;
 };
 
 }  // namespace wifi

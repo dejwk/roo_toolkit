@@ -156,7 +156,6 @@ class ListActivityContents : public roo_windows::VerticalLayout {
 class ListActivity : public roo_windows::Activity {
  public:
   ListActivity(const roo_windows::Environment& env, WifiModel& wifi_model,
-               roo_scheduler::Scheduler& scheduler,
                NetworkSelectedFn network_selected_fn);
 
   roo_windows::Widget& getContents() override { return scrollable_container_; }
@@ -170,6 +169,7 @@ class ListActivity : public roo_windows::Activity {
   void startScan();
 
   void onEnableChanged(bool enabled);
+  void onScanStarted();
   void onScanCompleted();
   void onCurrentNetworkChanged();
   void onConnectionStateChanged(Interface::EventType type);
@@ -178,8 +178,6 @@ class ListActivity : public roo_windows::Activity {
 
   ListActivityContents contents_;
   roo_windows::ScrollablePanel scrollable_container_;
-
-  roo_scheduler::SingletonTask start_scan_;
 };
 
 }  // namespace wifi

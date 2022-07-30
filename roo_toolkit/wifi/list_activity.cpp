@@ -193,43 +193,24 @@ void ListActivityContents::onCurrentNetworkChanged() {
 
 ListActivity::ListActivity(const roo_windows::Environment& env,
                            WifiModel& wifi_model,
-                           roo_scheduler::Scheduler& scheduler,
                            NetworkSelectedFn network_selected_fn)
     : wifi_model_(wifi_model),
       contents_(env, wifi_model, network_selected_fn),
-      scrollable_container_(env, contents_),
-      start_scan_(&scheduler, [this]() { startScan(); }) {}
+      scrollable_container_(env, contents_) {}
 
-void ListActivity::onStart() { onEnableChanged(wifi_model_.isEnabled()); }
+void ListActivity::onStart() {
+  onEnableChanged(wifi_model_.isEnabled());
+  wifi_model_.resume();
+}
 
 void ListActivity::onEnableChanged(bool enabled) {
   contents_.onEnableChanged(enabled);
-  if (enabled) {
-    if (wifi_model_.isScanCompleted()) {
-      contents_.onScanCompleted();
-      start_scan_.scheduleAfter(roo_time::Seconds(15));
-    } else {
-      startScan();
-    }
-  } else {
-    start_scan_.cancel();
-  }
 }
 
-void ListActivity::onStop() { start_scan_.cancel(); }
+void ListActivity::onStop() { wifi_model_.pause(); }
 
-void ListActivity::startScan() {
-  if (wifi_model_.startScan()) {
-    contents_.onScanStarted();
-  }
-}
-
-void ListActivity::onScanCompleted() {
-  contents_.onScanCompleted();
-  if (wifi_model_.isEnabled()) {
-    start_scan_.scheduleAfter(roo_time::Seconds(15));
-  }
-}
+void ListActivity::onScanStarted() { contents_.onScanStarted(); }
+void ListActivity::onScanCompleted() { contents_.onScanCompleted(); }
 
 void ListActivity::onCurrentNetworkChanged() {
   contents_.onCurrentNetworkChanged();
