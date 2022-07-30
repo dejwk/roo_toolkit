@@ -99,9 +99,9 @@ class EnterPasswordActivity : public roo_windows::Activity {
 
   void confirm();
 
+  WifiModel& wifi_model_;
   const std::string* ssid_;
   roo_windows::TextFieldEditor& editor_;
-  WifiModel& wifi_model_;
   EnterPasswordActivityContents contents_;
 };
 
