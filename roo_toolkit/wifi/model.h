@@ -109,6 +109,7 @@ class WifiModel {
 
   void connect(const std::string& ssid, const std::string& passwd) {
     wifi_.connect(ssid, passwd);
+    determineCurrentNetwork();
   }
 
  private:
@@ -144,31 +145,39 @@ class WifiModel {
     // If we're connected to the network, this is it.
     NetworkDetails current;
     if (wifi_.getApInfo(&current)) {
-      current_network_.ssid = std::string((const char*)current.ssid,
-                                          strlen((const char*)current.ssid));
-      current_network_.open = (current.authmode == WIFI_AUTH_OPEN);
-      current_network_.rssi = current.rssi;
-      current_network_status_ = current.status;
+      updateCurrentNetwork(std::string((const char*)current.ssid,
+                                       strlen((const char*)current.ssid)),
+                           (current.authmode == WIFI_AUTH_OPEN), current.rssi,
+                           current.status);
     } else {
       // Check if we have a default network.
-      current_network_.ssid = wifi_.store().getDefaultSSID();
-      current_network_.rssi = -128;
-      current_network_status_ = WL_NO_SSID_AVAIL;
-      if (!current_network_.ssid.empty()) {
+      std::string default_ssid = wifi_.store().getDefaultSSID();
+      const Network* default_network_in_range = nullptr;
+      if (!default_ssid.empty()) {
         // See if the default network is in range according to the latest
         // scan results.
-        for (int i = 0; i < all_networks_.size(); ++i) {
-          const Network& net = all_networks_[i];
-          if (net.ssid == current_network_.ssid) {
-            current_network_index_ = i;
-            current_network_.rssi = net.rssi;
-            current_network_.open = net.open;
-            current_network_status_ = WL_DISCONNECTED;
-            break;
-          }
-        }
+        default_network_in_range = lookupNetwork(default_ssid);
+      }
+      if (default_network_in_range == nullptr) {
+        updateCurrentNetwork(default_ssid, true, -128, WL_NO_SSID_AVAIL);
+      } else {
+        updateCurrentNetwork(default_ssid, default_network_in_range->open,
+                             default_network_in_range->rssi, WL_DISCONNECTED);
       }
     }
+  }
+
+  void updateCurrentNetwork(const std::string& ssid, bool open, int8_t rssi,
+                            ConnectionStatus status) {
+    if (rssi = current_network_.rssi && ssid == current_network_.ssid &&
+               open == current_network_.open &&
+               status == current_network_status_) {
+      return;
+    }
+    current_network_.ssid = ssid;
+    current_network_.open = open;
+    current_network_.rssi = rssi;
+    current_network_status_ = status;
     model_listener_.onCurrentNetworkChanged();
   }
 
