@@ -36,7 +36,9 @@ class WifiModel {
         all_networks_(),
         wifi_listener_(*this),
         model_listener_(listener),
-        start_scan_(&scheduler, [this]() { startScan(); }) {
+        start_scan_(&scheduler, [this]() { startScan(); }),
+        refresh_current_network_(
+            &scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {
     wifi_.addEventListener(&wifi_listener_);
   }
 
@@ -84,7 +86,6 @@ class WifiModel {
     wifi_.setEnabled(enabled);
     model_listener_.onEnableChanged(enabled);
     if (enabled) {
-      determineCurrentNetwork();
       resume();
     } else {
       pause();
@@ -95,6 +96,10 @@ class WifiModel {
 
   void resume() {
     if (!wifi_.isEnabled()) return;
+    refreshCurrentNetwork();
+    if (!refresh_current_network_.isScheduled()) {
+      refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
+    }
     if (wifi_.scanCompleted()) {
       model_listener_.onScanCompleted();
       start_scan_.scheduleAfter(roo_time::Seconds(15));
@@ -109,7 +114,7 @@ class WifiModel {
 
   void connect(const std::string& ssid, const std::string& passwd) {
     wifi_.connect(ssid, passwd);
-    determineCurrentNetwork();
+    refreshCurrentNetwork();
   }
 
  private:
@@ -137,11 +142,18 @@ class WifiModel {
   friend class WifiListener;
 
   void onConnectionStateChanged(Interface::EventType type) {
-    determineCurrentNetwork();
+    refreshCurrentNetwork();
     model_listener_.onConnectionStateChanged(type);
   }
 
-  void determineCurrentNetwork() {
+  void periodicRefreshCurrentNetwork() {
+    refreshCurrentNetwork();
+    if (isEnabled()) {
+      refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
+    }
+  }
+
+  void refreshCurrentNetwork() {
     // If we're connected to the network, this is it.
     NetworkDetails current;
     if (wifi_.getApInfo(&current)) {
@@ -169,9 +181,8 @@ class WifiModel {
 
   void updateCurrentNetwork(const std::string& ssid, bool open, int8_t rssi,
                             ConnectionStatus status) {
-    if (rssi = current_network_.rssi && ssid == current_network_.ssid &&
-               open == current_network_.open &&
-               status == current_network_status_) {
+    if (rssi == current_network_.rssi && ssid == current_network_.ssid &&
+        open == current_network_.open && status == current_network_status_) {
       return;
     }
     current_network_.ssid = ssid;
@@ -247,6 +258,7 @@ class WifiModel {
   Listener& model_listener_;
 
   roo_scheduler::SingletonTask start_scan_;
+  roo_scheduler::SingletonTask refresh_current_network_;
 };
 
 }  // namespace wifi
