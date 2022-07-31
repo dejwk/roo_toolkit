@@ -35,9 +35,9 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
     add(title_, VerticalLayout::Params().setGravity(roo_windows::kHorizontalGravityLeft));
-    add(indicator_, VerticalLayout::Params());
-    add(ssid_, VerticalLayout::Params());
-    add(status_, VerticalLayout::Params());
+    add(indicator_, VerticalLayout::Params().setVerticalPadding(roo_windows::PADDING_TINY));
+    add(ssid_, VerticalLayout::Params().setVerticalPadding(roo_windows::PADDING_NONE));
+    add(status_, VerticalLayout::Params().setVerticalPadding(roo_windows::PADDING_NONE));
     add(d1_, VerticalLayout::Params().setWeight(1));
     indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
   }
