@@ -132,7 +132,8 @@ bool ArduinoInterface::getApInfo(NetworkDetails* info) const {
 }
 
 bool ArduinoInterface::startScan() {
-  return (WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING);
+  scanning_ = (WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING);
+  return scanning_;
 }
 
 bool ArduinoInterface::scanCompleted() const {
