@@ -114,6 +114,16 @@ class WifiModel {
 
   void connect(const std::string& ssid, const std::string& passwd) {
     wifi_.connect(ssid, passwd);
+    std::string default_ssid = wifi_.store().getDefaultSSID();
+    if (ssid != default_ssid) {
+      wifi_.store().setDefaultSSID(ssid);
+    }
+    std::string current_password;
+    if (!passwd.empty() &&
+        (!wifi_.store().getPassword(ssid, current_password) ||
+         current_password != passwd)) {
+      wifi_.store().setPassword(ssid, passwd);
+    }
     refreshCurrentNetwork();
   }
 
