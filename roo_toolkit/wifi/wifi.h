@@ -56,12 +56,20 @@ class WifiSetup {
   void onEnableChanged(bool enabled) { list_.onEnableChanged(enabled); }
 
   void onScanStarted() { list_.onScanStarted(); }
-  void onScanCompleted() { list_.onScanCompleted(); }
 
-  void onCurrentNetworkChanged() { list_.onCurrentNetworkChanged(); }
+  void onScanCompleted() {
+    list_.onScanCompleted();
+    details_.onScanCompleted();
+  }
+
+  void onCurrentNetworkChanged() {
+    list_.onCurrentNetworkChanged();
+    details_.onCurrentNetworkChanged();
+  }
 
   void onConnectionStateChanged(Interface::EventType type) {
     list_.onConnectionStateChanged(type);
+    details_.onCurrentNetworkChanged();
   }
 
   void networkSelected(roo_windows::Task& task, const std::string& ssid) {
@@ -73,6 +81,13 @@ class WifiSetup {
     bool need_password = true;
     if (network == nullptr || network->open) {
       need_password = false;
+    }
+    if (!need_password && network != nullptr &&
+        (network->ssid != model_.currentNetwork().ssid ||
+         model_.currentNetworkStatus() != WL_CONNECTED)) {
+      // Clicked on an open network to which we are not already connected.
+      model_.connect(network->ssid, "");
+      return;
     }
     if (need_password) {
       task.enterActivity(&enter_password_);

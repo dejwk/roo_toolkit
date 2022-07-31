@@ -20,19 +20,19 @@
 namespace roo_toolkit {
 namespace wifi {
 
-// class EnterPasswordActivity;
+namespace {
 
-// class EditedPassword : public roo_windows::TextField {
-//  public:
-//   EditedPassword(const roo_windows::Environment& env,
-//                  roo_windows::TextFieldEditor& editor,
-//                  std::function<void()> confirm_fn);
+inline constexpr const char* statusAsString(ConnectionStatus status) {
+  return (status == WL_IDLE_STATUS)       ? "Connected, no Internet"
+         : (status == WL_NO_SSID_AVAIL)   ? "Out of range"
+         : (status == WL_CONNECTED)       ? "Connected"
+         : (status == WL_CONNECT_FAILED)  ? "Check password and try again"
+         : (status == WL_CONNECTION_LOST) ? "Connection lost"
+         : (status == WL_DISCONNECTED)    ? "Disconnected"
+                                          : "Unknown";
+}
 
-//   void onEditFinished(bool confirmed) override;
-
-//  private:
-//   std::function<void()> confirm_fn_;
-// };
+}  // namespace
 
 // All of the widgets of the 'enter password' activity.
 class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
@@ -56,24 +56,24 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
 
   void enter(const std::string& ssid) { ssid_.setContent(ssid); }
 
- private:
-  // Wifi& wifi_;
+  void onDetailsChanged(int16_t rssi, ConnectionStatus status) {
+    status_.setContent(statusAsString(status));
+  }
 
+ private:
   roo_windows::Icon wifi_icon_;
   roo_windows::TextLabel ssid_;
   roo_windows::TextLabel status_;
   roo_windows::HorizontalDivider d1_;
-
-  //   ActivityTitle title_;
-  //   PasswordBar pwbar_;
 };
 
 class NetworkDetailsActivity : public roo_windows::Activity {
  public:
-  NetworkDetailsActivity(const roo_windows::Environment& env, WifiModel& wifi_model)
+  NetworkDetailsActivity(const roo_windows::Environment& env,
+                         WifiModel& wifi_model)
       : roo_windows::Activity(),
         wifi_model_(wifi_model),
-        ssid_(nullptr),
+        ssid_(),
         contents_(env),
         scrollable_container_(env, contents_) {}
 
@@ -81,30 +81,37 @@ class NetworkDetailsActivity : public roo_windows::Activity {
 
   void enter(roo_windows::Task& task, const std::string& ssid) {
     task.enterActivity(this);
-    ssid_ = &ssid;
-    contents_.enter(*ssid_);
+    ssid_ = ssid;
+    contents_.enter(ssid_);
+    onScanCompleted();
+    onCurrentNetworkChanged();
   }
 
-  //   void onPause() override { editor_.edit(nullptr); }
+  void onStop() override { ssid_ = ""; }
+
+  void onCurrentNetworkChanged() {
+    if (ssid_.empty()) return;  // Not active.
+    if (ssid_ != wifi_model_.currentNetwork().ssid) return;
+    contents_.onDetailsChanged(wifi_model_.currentNetwork().rssi,
+                               wifi_model_.currentNetworkStatus());
+  }
+
+  void onScanCompleted() {
+    if (ssid_.empty()) return;  // Not active.
+    const WifiModel::Network* net = wifi_model_.lookupNetwork(ssid_);
+    if (net == nullptr) {
+      // Out network is no longer in range.
+      contents_.onDetailsChanged(-128, WL_NO_SSID_AVAIL);
+    } else if (net->ssid == wifi_model_.currentNetwork().ssid) {
+      // No change. Our network is still the default, and in range.
+    } else {
+      // Our network is no longer the default.
+      contents_.onDetailsChanged(net->rssi, WL_DISCONNECTED);
+    }
+  }
 
  private:
-  //   const std::string& passwd() const { return contents_.passwd(); }
-
-  //   void confirm() {
-  //     Serial.println("CONFIRMED!");
-  //     editor_.edit(nullptr);
-  //     wifi_.store().setPassword(*ssid_, passwd());
-  //     wifi_.connect(*ssid_, passwd());
-  //     exit();
-  //     //     // if (!editing_) return;
-  //     //     // editing_ = false;
-  //     //     text_.editor().edit(nullptr);
-  //     //     // enter_fn_(text_.content());
-  //     //     // enter_fn_ = nullptr;
-  //     //     exit();
-  //   }
-
-  const std::string* ssid_;
+  std::string ssid_;
   WifiModel& wifi_model_;
   NetworkDetailsActivityContents contents_;
   roo_windows::ScrollablePanel scrollable_container_;
