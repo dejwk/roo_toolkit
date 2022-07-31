@@ -34,8 +34,15 @@ class PasswordBar : public roo_windows::HorizontalLayout {
               roo_windows::TextFieldEditor& editor,
               std::function<void()> confirm_fn)
       : roo_windows::HorizontalLayout(env),
+        visibility_(env),
         text_(env, editor, confirm_fn),
         enter_(env, ic_outlined_24_navigation_check()) {
+    text_.setStarred(true);
+    visibility_.setOff();
+    visibility_.setOnClicked([this]() { visibilityChanged(); });
+    setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
+                                    roo_windows::kVerticalGravityMiddle));
+    add(visibility_, HorizontalLayout::Params());
     add(text_, HorizontalLayout::Params().setWeight(1));
     add(enter_, HorizontalLayout::Params());
     enter_.setOnClicked(confirm_fn);
@@ -46,6 +53,9 @@ class PasswordBar : public roo_windows::HorizontalLayout {
   const std::string& passwd() const { return text_.content(); }
 
  private:
+  void visibilityChanged() { text_.setStarred(visibility_.isOff()); }
+
+  roo_windows::VisibilityToggle visibility_;
   EditedPassword text_;
   roo_windows::Button enter_;
 };
