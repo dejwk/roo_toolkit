@@ -7,6 +7,27 @@
 namespace roo_toolkit {
 namespace wifi {
 
+namespace {
+
+ConnectionStatus getConnectionStatus(Interface::EventType type) {
+  switch (type) {
+    case Interface::EV_CONNECTED:
+      return WL_IDLE_STATUS;
+    case Interface::EV_GOT_IP:
+      return WL_CONNECTED;
+    case Interface::EV_DISCONNECTED:
+      return WL_DISCONNECTED;
+    case Interface::EV_CONNECTION_FAILED:
+      return WL_CONNECT_FAILED;
+    case Interface::EV_CONNECTION_LOST:
+      return WL_CONNECTION_LOST;
+    default:
+      return WL_CONNECT_FAILED;
+  }
+}
+
+}  // namespace
+
 class WifiModel {
  public:
   struct Network {
@@ -104,7 +125,7 @@ class WifiModel {
 
   void resume() {
     if (!wifi_.isEnabled()) return;
-    refreshCurrentNetwork(true);
+    refreshCurrentNetwork();
     if (!refresh_current_network_.isScheduled()) {
       refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
     }
@@ -133,7 +154,13 @@ class WifiModel {
          current_password != passwd)) {
       wifi_.store().setPassword(ssid, passwd);
     }
-    refreshCurrentNetwork(true);
+    const Network* in_range = lookupNetwork(ssid);
+    if (in_range == nullptr) {
+      updateCurrentNetwork(ssid, passwd.empty(), -128, wifi_.getStatus(), true);
+    } else {
+      updateCurrentNetwork(ssid, in_range->open, in_range->rssi,
+                           wifi_.getStatus(), true);
+    }
   }
 
  private:
@@ -162,25 +189,27 @@ class WifiModel {
 
   void onConnectionStateChanged(Interface::EventType type) {
     connecting_ = false;
-    refreshCurrentNetwork(false);
+    updateCurrentNetwork(current_network_.ssid, current_network_.open,
+                         current_network_.rssi, getConnectionStatus(type),
+                         true);
     model_listener_.onConnectionStateChanged(type);
   }
 
   void periodicRefreshCurrentNetwork() {
-    refreshCurrentNetwork(false);
+    refreshCurrentNetwork();
     if (isEnabled()) {
       refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
     }
   }
 
-  void refreshCurrentNetwork(bool force_notify) {
+  void refreshCurrentNetwork() {
     // If we're connected to the network, this is it.
     NetworkDetails current;
     if (wifi_.getApInfo(&current)) {
       updateCurrentNetwork(std::string((const char*)current.ssid,
                                        strlen((const char*)current.ssid)),
                            (current.authmode == WIFI_AUTH_OPEN), current.rssi,
-                           current.status, force_notify);
+                           current.status, false);
     } else {
       // Check if we have a default network.
       std::string default_ssid = wifi_.store().getDefaultSSID();
@@ -190,13 +219,19 @@ class WifiModel {
         // scan results.
         default_network_in_range = lookupNetwork(default_ssid);
       }
+      // Keep erroneous states sticky. Only update if the network has actually
+      // changed.
       if (default_network_in_range == nullptr) {
-        updateCurrentNetwork(default_ssid, true, -128, WL_NO_SSID_AVAIL,
-                             force_notify);
+        ConnectionStatus new_status = (default_ssid == current_network_.ssid)
+                                          ? current_network_status_
+                                          : WL_NO_SSID_AVAIL;
+        updateCurrentNetwork(default_ssid, true, -128, new_status, false);
       } else {
+        ConnectionStatus new_status = (default_ssid == current_network_.ssid)
+                                          ? current_network_status_
+                                          : WL_DISCONNECTED;
         updateCurrentNetwork(default_ssid, default_network_in_range->open,
-                             default_network_in_range->rssi, WL_DISCONNECTED,
-                             force_notify);
+                             default_network_in_range->rssi, new_status, false);
       }
     }
   }
@@ -261,9 +296,7 @@ class WifiModel {
     });
     // Finally, copy over the results.
     all_networks_.resize(dst);
-    if (current_network_status_ == WL_DISCONNECTED) {
-      current_network_status_ = WL_NO_SSID_AVAIL;
-    }
+    bool found = false;
     for (uint8_t i = 0; i < dst; ++i) {
       NetworkDetails& src = raw_data[indices[i]];
       Network& dst = all_networks_[i];
@@ -272,11 +305,15 @@ class WifiModel {
       dst.open = (src.authmode == WIFI_AUTH_OPEN);
       dst.rssi = src.rssi;
       if (dst.ssid == current_network_.ssid) {
+        found = true;
         current_network_index_ = i;
         if (current_network_status_ == WL_NO_SSID_AVAIL) {
           current_network_status_ = WL_DISCONNECTED;
         }
       }
+    }
+    if (!found && current_network_status_ == WL_DISCONNECTED) {
+      current_network_status_ = WL_NO_SSID_AVAIL;
     }
     model_listener_.onScanCompleted();
     if (wifi_.isEnabled()) {

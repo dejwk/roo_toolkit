@@ -85,6 +85,8 @@ class ArduinoWifi {
     controller_.begin();
   }
 
+  ConnectionStatus getStatus() const { return controller_.getStatus(); }
+
   void setEnabled(bool enabled) { controller_.setEnabled(enabled); }
 
   bool isEnabled() const { return controller_.isEnabled(); }

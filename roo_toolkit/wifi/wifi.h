@@ -84,7 +84,8 @@ class WifiSetup {
           !model_.isConnecting()))) {
       // Clicked on an open or remembered network to which we are not already
       // connected or connecting. Interpret as a pure 'action' intent.
-      model_.connect(network->ssid, password);
+      std::cout << "Calling connect: " << ssid << "\n";
+      model_.connect(ssid, password);
       return;
     }
     if (need_password) {

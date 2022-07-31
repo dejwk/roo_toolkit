@@ -159,6 +159,8 @@ class Controller {
 
   bool isEnabled() const { return enabled_; }
 
+  ConnectionStatus getStatus() const { return interface_.getStatus(); }
+
   void addEventListener(Interface::EventListener* listener) {
     interface_.addEventListener(listener);
   }
