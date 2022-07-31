@@ -176,11 +176,12 @@ void ListActivityContents::onScanStarted() { progress_.setVisibility(VISIBLE); }
 
 void ListActivityContents::onScanCompleted() {
   progress_.setVisibility(INVISIBLE);
+  current_.onChange(wifi_model_);
   list_.modelChanged();
 }
 
 void ListActivityContents::onCurrentNetworkChanged() {
-  if (wifi_model_.currentNetwork().ssid.empty()) {
+  if (wifi_model_.currentNetwork().ssid.empty() || !wifi_model_.isEnabled()) {
     current_.setVisibility(GONE);
     divider_.setVisibility(GONE);
   } else {

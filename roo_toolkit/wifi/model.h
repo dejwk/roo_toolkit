@@ -87,6 +87,7 @@ class WifiModel {
   void toggleEnabled() {
     bool enabled = !wifi_.isEnabled();
     wifi_.setEnabled(enabled);
+    connecting_ = false;
     model_listener_.onEnableChanged(enabled);
     if (enabled) {
       resume();
@@ -222,7 +223,6 @@ class WifiModel {
   }
 
   void onScanCompleted() {
-    current_network_status_ = WL_NO_SSID_AVAIL;
     current_network_index_ = -1;
     std::vector<NetworkDetails> raw_data;
     wifi_.getScanResults(&raw_data, 100);
@@ -261,6 +261,9 @@ class WifiModel {
     });
     // Finally, copy over the results.
     all_networks_.resize(dst);
+    if (current_network_status_ == WL_DISCONNECTED) {
+      current_network_status_ = WL_NO_SSID_AVAIL;
+    }
     for (uint8_t i = 0; i < dst; ++i) {
       NetworkDetails& src = raw_data[indices[i]];
       Network& dst = all_networks_[i];
@@ -270,6 +273,9 @@ class WifiModel {
       dst.rssi = src.rssi;
       if (dst.ssid == current_network_.ssid) {
         current_network_index_ = i;
+        if (current_network_status_ == WL_NO_SSID_AVAIL) {
+          current_network_status_ = WL_DISCONNECTED;
+        }
       }
     }
     model_listener_.onScanCompleted();
