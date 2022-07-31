@@ -100,7 +100,7 @@ void Enable::onEnableChanged(bool enabled) {
 CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
                                NetworkSelectedFn on_click)
     : HorizontalLayout(env),
-      icon_(env),
+      indicator_(env),
       ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
             roo_display::HAlign::Left(), roo_display::VAlign::Bottom()),
       status_(env, "Disconnected", roo_display::font_NotoSans_Condensed_12(),
@@ -109,29 +109,29 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
       on_click_(on_click) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
-  add(icon_, HorizontalLayout::Params());
+  add(indicator_, HorizontalLayout::Params());
   ssid_status_.add(ssid_, roo_windows::VerticalLayout::Params());
   ssid_status_.add(status_, roo_windows::VerticalLayout::Params());
   add(ssid_status_, HorizontalLayout::Params().setWeight(1));
-  icon_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
+  indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
 }
 
 void CurrentNetwork::onChange(const WifiModel& model) {
   const WifiModel::Network& current = model.currentNetwork();
-  icon_.setWifiSignalStrength(current.rssi);
+  indicator_.setWifiSignalStrength(current.rssi);
   ssid_.setContent(current.ssid);
   switch (model.currentNetworkStatus()) {
     case WL_CONNECTED: {
-      icon_.setConnectionStatus(roo_windows::WifiIndicator::CONNECTED);
+      indicator_.setConnectionStatus(roo_windows::WifiIndicator::CONNECTED);
       break;
     }
     case WL_IDLE_STATUS: {
-      icon_.setConnectionStatus(
+      indicator_.setConnectionStatus(
           roo_windows::WifiIndicator::CONNECTED_NO_INTERNET);
       break;
     }
     default: {
-      icon_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
+      indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
       break;
     }
   }
@@ -176,15 +176,10 @@ void ListActivityContents::onScanStarted() { progress_.setVisibility(VISIBLE); }
 
 void ListActivityContents::onScanCompleted() {
   progress_.setVisibility(INVISIBLE);
-  LOG(INFO) << "Called list updated";
-  // list_model_.refresh();
-  LOG(INFO) << "Model now has " << list_model_.elementCount() << " items";
   list_.modelChanged();
 }
 
 void ListActivityContents::onCurrentNetworkChanged() {
-  LOG(INFO) << "Current network changed to "
-            << wifi_model_.currentNetwork().ssid;
   if (wifi_model_.currentNetwork().ssid.empty()) {
     current_.setVisibility(GONE);
     divider_.setVisibility(GONE);

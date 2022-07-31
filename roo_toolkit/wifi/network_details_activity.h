@@ -1,6 +1,5 @@
 #pragma once
 
-#include "roo_material_icons/filled/36/device.h"
 #include "roo_smooth_fonts/NotoSans_Condensed/15.h"
 #include "roo_smooth_fonts/NotoSans_Condensed/18.h"
 #include "roo_smooth_fonts/NotoSans_Condensed/27.h"
@@ -16,6 +15,7 @@
 #include "roo_windows/widgets/divider.h"
 #include "roo_windows/widgets/icon_button.h"
 #include "roo_windows/widgets/text_field.h"
+#include "roo_windows/indicators/36/wifi.h"
 
 namespace roo_toolkit {
 namespace wifi {
@@ -25,8 +25,8 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
  public:
   NetworkDetailsActivityContents(const roo_windows::Environment& env)
       : roo_windows::VerticalLayout(env),
-        // wifi_(wifi),
-        wifi_icon_(env, ic_filled_36_device_signal_wifi_4_bar()),
+        title_(env, "WiFi connection details"),
+        indicator_(env),
         ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
               roo_display::HAlign::Center(), roo_display::VAlign::Middle()),
         status_(env, "", roo_display::font_NotoSans_Condensed_15(),
@@ -34,20 +34,40 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
         d1_(env) {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
-    add(wifi_icon_, VerticalLayout::Params());
+    add(title_, VerticalLayout::Params().setGravity(roo_windows::kHorizontalGravityLeft));
+    add(indicator_, VerticalLayout::Params());
     add(ssid_, VerticalLayout::Params());
     add(status_, VerticalLayout::Params());
     add(d1_, VerticalLayout::Params().setWeight(1));
+    indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
   }
 
   void enter(const std::string& ssid) { ssid_.setContent(ssid); }
 
   void onDetailsChanged(int16_t rssi, ConnectionStatus status, bool connecting) {
+    indicator_.setWifiSignalStrength(rssi);
+    switch (status) {
+      case WL_CONNECTED: {
+        indicator_.setConnectionStatus(roo_windows::WifiIndicator::CONNECTED);
+        break;
+      }
+      case WL_IDLE_STATUS: {
+        indicator_.setConnectionStatus(
+            roo_windows::WifiIndicator::CONNECTED_NO_INTERNET);
+        break;
+      }
+      default: {
+        indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
+        break;
+      }
+    }
+
     status_.setContent(StatusAsString(status, connecting));
   }
 
  private:
-  roo_windows::Icon wifi_icon_;
+  ActivityTitle title_;
+  roo_windows::WifiIndicator36x36 indicator_;
   roo_windows::TextLabel ssid_;
   roo_windows::TextLabel status_;
   roo_windows::HorizontalDivider d1_;

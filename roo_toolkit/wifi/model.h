@@ -95,6 +95,10 @@ class WifiModel {
     }
   }
 
+  bool getStoredPassword(const std::string& ssid, std::string passwd) const {
+    return wifi_.store().getPassword(ssid, passwd);
+  }
+
   void pause() { start_scan_.cancel(); }
 
   void resume() {

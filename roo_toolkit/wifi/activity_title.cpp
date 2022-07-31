@@ -11,7 +11,7 @@ ActivityTitle::ActivityTitle(const roo_windows::Environment& env,
                              const std::string& title)
     : HorizontalLayout(env),
       back_(env, ic_outlined_24_navigation_arrow_back()),
-      label_(env, "Wi-Fi", roo_display::font_NotoSans_CondensedBold_18(),
+      label_(env, title, roo_display::font_NotoSans_CondensedBold_18(),
              roo_display::HAlign::Left(), roo_display::VAlign::Middle()) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
