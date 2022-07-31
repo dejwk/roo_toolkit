@@ -20,20 +20,6 @@
 namespace roo_toolkit {
 namespace wifi {
 
-namespace {
-
-inline constexpr const char* statusAsString(ConnectionStatus status) {
-  return (status == WL_IDLE_STATUS)       ? "Connected, no Internet"
-         : (status == WL_NO_SSID_AVAIL)   ? "Out of range"
-         : (status == WL_CONNECTED)       ? "Connected"
-         : (status == WL_CONNECT_FAILED)  ? "Check password and try again"
-         : (status == WL_CONNECTION_LOST) ? "Connection lost"
-         : (status == WL_DISCONNECTED)    ? "Disconnected"
-                                          : "Unknown";
-}
-
-}  // namespace
-
 // All of the widgets of the 'enter password' activity.
 class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
  public:
@@ -56,8 +42,8 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
 
   void enter(const std::string& ssid) { ssid_.setContent(ssid); }
 
-  void onDetailsChanged(int16_t rssi, ConnectionStatus status) {
-    status_.setContent(statusAsString(status));
+  void onDetailsChanged(int16_t rssi, ConnectionStatus status, bool connecting) {
+    status_.setContent(StatusAsString(status, connecting));
   }
 
  private:
@@ -93,7 +79,8 @@ class NetworkDetailsActivity : public roo_windows::Activity {
     if (ssid_.empty()) return;  // Not active.
     if (ssid_ != wifi_model_.currentNetwork().ssid) return;
     contents_.onDetailsChanged(wifi_model_.currentNetwork().rssi,
-                               wifi_model_.currentNetworkStatus());
+                               wifi_model_.currentNetworkStatus(),
+                               wifi_model_.isConnecting());
   }
 
   void onScanCompleted() {
@@ -101,12 +88,12 @@ class NetworkDetailsActivity : public roo_windows::Activity {
     const WifiModel::Network* net = wifi_model_.lookupNetwork(ssid_);
     if (net == nullptr) {
       // Out network is no longer in range.
-      contents_.onDetailsChanged(-128, WL_NO_SSID_AVAIL);
+      contents_.onDetailsChanged(-128, WL_NO_SSID_AVAIL, false);
     } else if (net->ssid == wifi_model_.currentNetwork().ssid) {
-      // No change. Our network is still the default, and in range.
+      // No change. Our network is still current, and in range.
     } else {
-      // Our network is no longer the default.
-      contents_.onDetailsChanged(net->rssi, WL_DISCONNECTED);
+      // Our network is no longer current.
+      contents_.onDetailsChanged(net->rssi, WL_DISCONNECTED, false);
     }
   }
 

@@ -58,11 +58,9 @@ void ArduinoStore::setIsInterfaceEnabled(bool enabled) {
 }
 
 std::string ArduinoStore::getDefaultSSID() {
-  Serial.println("Getting SSID");
   if (!preferences_.isKey("ssid")) return "";
   char result[33];
   preferences_.getString("ssid", result, 33);
-  Serial.println("Getting SSID done");
   return std::string(result);
 }
 
@@ -71,13 +69,11 @@ void ArduinoStore::setDefaultSSID(const std::string& ssid) {
 }
 
 bool ArduinoStore::getPassword(const std::string& ssid, std::string& password) {
-  Serial.println("Getting pwd");
   char pwkey[16];
   ToSsiPwdKey(ssid, pwkey);
   if (!preferences_.isKey(pwkey)) return false;
   char pwd[128];
   preferences_.getString(pwkey, pwd, 128);
-  Serial.println("Getting done");
   return true;
 }
 
@@ -136,11 +132,7 @@ bool ArduinoInterface::getApInfo(NetworkDetails* info) const {
 }
 
 bool ArduinoInterface::startScan() {
-  scanning_ = (WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING);
-  // if (scanning) {
-  //   check_scan_completed_.scheduleAfter(roo_time::Millis(500));
-  // }
-  return scanning_;
+  return (WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING);
 }
 
 bool ArduinoInterface::scanCompleted() const {
@@ -158,19 +150,11 @@ bool ArduinoInterface::getScanResults(std::vector<NetworkDetails>* list,
   list->clear();
   for (int i = 0; i < max_count; ++i) {
     NetworkDetails info;
-    // String ssid;
-    // uint8_t encryptionType;
-    // int32_t rssi;
-    // WiFi.getNetworkInfo(i, ssid, encryptionType, &RSSI, uint8_t* &BSSID,
-    // int32_t &channel);
-
     auto ssid = WiFi.SSID(i);
     memcpy(info.ssid, ssid.c_str(), ssid.length());
     info.ssid[ssid.length()] = 0;
     info.authmode = authMode(WiFi.encryptionType(i));
     info.rssi = WiFi.RSSI(i);
-    // auto mac = WiFi.macAddress(i);
-    // memcpy(info->bssid, mac.c_str(), 6);
     info.primary = WiFi.channel(i);
     info.group_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
     info.pairwise_cipher = WIFI_CIPHER_TYPE_UNKNOWN;
@@ -185,9 +169,9 @@ bool ArduinoInterface::getScanResults(std::vector<NetworkDetails>* list,
 
 void ArduinoInterface::disconnect() { WiFi.disconnect(); }
 
-void ArduinoInterface::connect(const std::string& ssid,
+bool ArduinoInterface::connect(const std::string& ssid,
                                const std::string& passwd) {
-  WiFi.begin(ssid.c_str(), passwd.c_str());
+  return WiFi.begin(ssid.c_str(), passwd.c_str()) != WL_CONNECT_FAILED;
 }
 
 ConnectionStatus ArduinoInterface::getStatus() {
@@ -224,9 +208,7 @@ Interface::EventType getEventType(ConnectionStatus status) {
 }  // namespace
 
 void ArduinoInterface::checkStatusChanged() {
-  // std::cout << "Checking status change\n";
   ConnectionStatus new_status = getStatus();
-  // std::cout << "New status: " << new_status << "\n";
   if (new_status != status_) {
     status_ = new_status;
     EventType type = getEventType(status_);

@@ -97,14 +97,16 @@ void Enable::onEnableChanged(bool enabled) {
   setBackground(enabled ? enabled_color_ : disabled_color_);
 }
 
-CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env)
+CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
+                               NetworkSelectedFn on_click)
     : HorizontalLayout(env),
       icon_(env),
       ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
             roo_display::HAlign::Left(), roo_display::VAlign::Bottom()),
       status_(env, "Disconnected", roo_display::font_NotoSans_Condensed_12(),
               roo_display::HAlign::Left(), roo_display::VAlign::Top()),
-      ssid_status_(env) {
+      ssid_status_(env),
+      on_click_(on_click) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
   add(icon_, HorizontalLayout::Params());
@@ -133,6 +135,8 @@ void CurrentNetwork::onChange(const WifiModel& model) {
       break;
     }
   }
+  status_.setContent(
+      StatusAsString(model.currentNetworkStatus(), model.isConnecting()));
 }
 
 ListActivityContents::ListActivityContents(
@@ -143,7 +147,7 @@ ListActivityContents::ListActivityContents(
       title_(env, "WiFi"),
       enable_(env, wifi_model),
       progress_(env),
-      current_(env),
+      current_(env, network_selected_fn),
       divider_(env),
       list_model_(wifi_model),
       list_(env, list_model_, WifiListItem(env, network_selected_fn)) {
@@ -189,6 +193,7 @@ void ListActivityContents::onCurrentNetworkChanged() {
     divider_.setVisibility(VISIBLE);
   }
   current_.onChange(wifi_model_);
+  list_.modelChanged();
 }
 
 ListActivity::ListActivity(const roo_windows::Environment& env,

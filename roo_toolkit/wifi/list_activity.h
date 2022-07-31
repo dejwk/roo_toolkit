@@ -106,9 +106,11 @@ class Enable : public roo_windows::HorizontalLayout {
 // Shows the currently selected network.
 class CurrentNetwork : public roo_windows::HorizontalLayout {
  public:
-  CurrentNetwork(const roo_windows::Environment& env);
+  CurrentNetwork(const roo_windows::Environment& env, NetworkSelectedFn on_click);
 
   bool isClickable() const override { return true; }
+
+  void onClicked() override { on_click_(*getTask(), ssid_.content()); }
 
   void onChange(const WifiModel& model);
 
@@ -123,6 +125,7 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
   roo_windows::TextBlock ssid_;
   roo_windows::TextBlock status_;
   roo_windows::VerticalLayout ssid_status_;
+  NetworkSelectedFn on_click_;
 };
 
 // All of the widgets of the list activity.

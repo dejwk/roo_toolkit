@@ -36,6 +36,7 @@ class WifiModel {
         all_networks_(),
         wifi_listener_(*this),
         model_listener_(listener),
+        connecting_(false),
         start_scan_(&scheduler, [this]() { startScan(); }),
         refresh_current_network_(
             &scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {
@@ -81,6 +82,8 @@ class WifiModel {
   bool isScanCompleted() const { return wifi_.scanCompleted(); }
   bool isEnabled() const { return wifi_.isEnabled(); }
 
+  bool isConnecting() const { return connecting_; }
+
   void toggleEnabled() {
     bool enabled = !wifi_.isEnabled();
     wifi_.setEnabled(enabled);
@@ -112,8 +115,9 @@ class WifiModel {
     wifi_.store().setPassword(ssid, passwd);
   }
 
-  void connect(const std::string& ssid, const std::string& passwd) {
-    wifi_.connect(ssid, passwd);
+  bool connect(const std::string& ssid, const std::string& passwd) {
+    if (!wifi_.connect(ssid, passwd)) return false;
+    connecting_ = true;
     std::string default_ssid = wifi_.store().getDefaultSSID();
     if (ssid != default_ssid) {
       wifi_.store().setDefaultSSID(ssid);
@@ -152,6 +156,7 @@ class WifiModel {
   friend class WifiListener;
 
   void onConnectionStateChanged(Interface::EventType type) {
+    connecting_ = false;
     refreshCurrentNetwork();
     model_listener_.onConnectionStateChanged(type);
   }
@@ -199,6 +204,13 @@ class WifiModel {
     current_network_.open = open;
     current_network_.rssi = rssi;
     current_network_status_ = status;
+    current_network_index_ = -1;
+    for (int i = 0; i < all_networks_.size(); ++i) {
+      if (all_networks_[i].ssid == ssid) {
+        current_network_index_ = i;
+        break;
+      }
+    }
     model_listener_.onCurrentNetworkChanged();
   }
 
@@ -266,10 +278,23 @@ class WifiModel {
   std::vector<Network> all_networks_;
   WifiListener wifi_listener_;
   Listener& model_listener_;
+  bool connecting_;
 
   roo_scheduler::SingletonTask start_scan_;
   roo_scheduler::SingletonTask refresh_current_network_;
 };
+
+inline constexpr const char* StatusAsString(ConnectionStatus status,
+                                            bool connecting) {
+  return (status == WL_IDLE_STATUS)       ? "Connected, no Internet"
+         : (status == WL_NO_SSID_AVAIL)   ? "Out of range"
+         : (status == WL_CONNECTED)       ? "Connected"
+         : (status == WL_CONNECT_FAILED)  ? "Check password and try again"
+         : (status == WL_CONNECTION_LOST) ? "Connection lost"
+         : (status == WL_DISCONNECTED)
+             ? (connecting ? "Connecting" : "Disconnected")
+             : "Unknown";
+}
 
 }  // namespace wifi
 }  // namespace roo_toolkit

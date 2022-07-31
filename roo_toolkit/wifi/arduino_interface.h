@@ -54,7 +54,7 @@ class ArduinoInterface : public Interface {
 
   void disconnect() override;
 
-  void connect(const std::string& ssid, const std::string& passwd) override;
+  bool connect(const std::string& ssid, const std::string& passwd) override;
 
   ConnectionStatus getStatus() override;
 
@@ -109,8 +109,8 @@ class ArduinoWifi {
     return controller_.getScanResults(list, max_count);
   }
 
-  void connect(const std::string& ssid, const std::string& passwd) {
-    interface_.connect(ssid, passwd);
+  bool connect(const std::string& ssid, const std::string& passwd) {
+    return interface_.connect(ssid, passwd);
   }
 
   Store& store() { return store_; }

@@ -121,7 +121,7 @@ class Interface {
   virtual bool scanCompleted() const = 0;
 
   virtual void disconnect() = 0;
-  virtual void connect(const std::string& ssid, const std::string& passwd) = 0;
+  virtual bool connect(const std::string& ssid, const std::string& passwd) = 0;
   virtual ConnectionStatus getStatus() = 0;
 
   virtual bool getScanResults(std::vector<NetworkDetails>* list,
