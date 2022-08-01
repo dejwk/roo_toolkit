@@ -7,8 +7,8 @@ EditedPassword::EditedPassword(const roo_windows::Environment& env,
                                roo_windows::TextFieldEditor& editor,
                                std::function<void()> confirm_fn)
     : TextField(env, editor, roo_display::font_NotoSans_Regular_18(),
-                "enter password", roo_display::HAlign::Left(),
-                roo_display::VAlign::Middle(), UNDERLINE),
+                "enter password", roo_display::kLeft | roo_display::kMiddle,
+                UNDERLINE),
       confirm_fn_(confirm_fn) {}
 
 void EditedPassword::onEditFinished(bool confirmed) {

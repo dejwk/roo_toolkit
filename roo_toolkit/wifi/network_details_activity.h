@@ -28,9 +28,9 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
         title_(env, "WiFi connection details"),
         indicator_(env),
         ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
-              roo_display::HAlign::Center(), roo_display::VAlign::Middle()),
+              roo_display::kCenter | roo_display::kMiddle),
         status_(env, "", roo_display::font_NotoSans_Condensed_15(),
-                roo_display::HAlign::Center(), roo_display::VAlign::Middle()),
+                roo_display::kCenter | roo_display::kMiddle),
         d1_(env) {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
