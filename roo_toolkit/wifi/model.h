@@ -117,7 +117,7 @@ class WifiModel {
     }
   }
 
-  bool getStoredPassword(const std::string& ssid, std::string passwd) const {
+  bool getStoredPassword(const std::string& ssid, std::string& passwd) const {
     return wifi_.store().getPassword(ssid, passwd);
   }
 
@@ -142,8 +142,6 @@ class WifiModel {
   }
 
   bool connect(const std::string& ssid, const std::string& passwd) {
-    if (!wifi_.connect(ssid, passwd)) return false;
-    connecting_ = true;
     std::string default_ssid = wifi_.store().getDefaultSSID();
     if (ssid != default_ssid) {
       wifi_.store().setDefaultSSID(ssid);
@@ -154,13 +152,16 @@ class WifiModel {
          current_password != passwd)) {
       wifi_.store().setPassword(ssid, passwd);
     }
+    if (!wifi_.connect(ssid, passwd)) return false;
+    connecting_ = true;
     const Network* in_range = lookupNetwork(ssid);
     if (in_range == nullptr) {
-      updateCurrentNetwork(ssid, passwd.empty(), -128, wifi_.getStatus(), true);
+      updateCurrentNetwork(ssid, passwd.empty(), -128, WL_DISCONNECTED, true);
     } else {
       updateCurrentNetwork(ssid, in_range->open, in_range->rssi,
-                           wifi_.getStatus(), true);
+                           WL_DISCONNECTED, true);
     }
+    return true;
   }
 
  private:
@@ -188,7 +189,7 @@ class WifiModel {
   friend class WifiListener;
 
   void onConnectionStateChanged(Interface::EventType type) {
-    connecting_ = false;
+    if (type == Interface::EV_UNKNOWN) return;
     updateCurrentNetwork(current_network_.ssid, current_network_.open,
                          current_network_.rssi, getConnectionStatus(type),
                          true);
@@ -334,16 +335,17 @@ class WifiModel {
   roo_scheduler::SingletonTask refresh_current_network_;
 };
 
-inline constexpr const char* StatusAsString(ConnectionStatus status,
-                                            bool connecting) {
-  return (status == WL_IDLE_STATUS)       ? "Connected, no Internet"
+inline const char* StatusAsString(ConnectionStatus status, bool connecting) {
+  return (connecting && (status == WL_DISCONNECTED ||
+                         status == WL_NO_SSID_AVAIL))
+             ? "Connecting"
+         : (status == WL_IDLE_STATUS)     ? "Connected, no Internet"
          : (status == WL_NO_SSID_AVAIL)   ? "Out of range"
          : (status == WL_CONNECTED)       ? "Connected"
          : (status == WL_CONNECT_FAILED)  ? "Check password and try again"
          : (status == WL_CONNECTION_LOST) ? "Connection lost"
-         : (status == WL_DISCONNECTED)
-             ? (connecting ? "Connecting" : "Disconnected")
-             : "Unknown";
+         : (status == WL_DISCONNECTED)    ? "Disconnected"
+                                          : "Unknown";
 }
 
 }  // namespace wifi
