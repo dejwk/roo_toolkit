@@ -73,7 +73,8 @@ bool ArduinoStore::getPassword(const std::string& ssid, std::string& password) {
   ToSsiPwdKey(ssid, pwkey);
   if (!preferences_.isKey(pwkey)) return false;
   char pwd[128];
-  preferences_.getString(pwkey, pwd, 128);
+  size_t len = preferences_.getString(pwkey, pwd, 128);
+  password = std::string(pwd, len);
   return true;
 }
 
@@ -172,7 +173,8 @@ void ArduinoInterface::disconnect() { WiFi.disconnect(); }
 
 bool ArduinoInterface::connect(const std::string& ssid,
                                const std::string& passwd) {
-  return WiFi.begin(ssid.c_str(), passwd.c_str()) != WL_CONNECT_FAILED;
+  WiFi.begin(ssid.c_str(), passwd.c_str());
+  return true;
 }
 
 ConnectionStatus ArduinoInterface::getStatus() {
