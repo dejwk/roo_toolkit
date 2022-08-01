@@ -75,16 +75,18 @@ class WifiSetup {
   void networkSelected(roo_windows::Task& task, const std::string& ssid) {
     const WifiModel::Network* network = model_.lookupNetwork(ssid);
     std::string password;
-    bool has_password = model_.getStoredPassword(ssid, password);
+    bool same_network = (ssid == model_.currentNetwork().ssid);
+    bool has_password = false;
+    if (!same_network || model_.currentNetworkStatus() != WL_CONNECT_FAILED) {
+      has_password = model_.getStoredPassword(ssid, password);
+    }
     bool need_password =
         (network != nullptr && !network->open && !has_password);
-    if (!need_password && network != nullptr &&
-        (network->ssid != model_.currentNetwork().ssid ||
-         (model_.currentNetworkStatus() == WL_DISCONNECTED &&
-          !model_.isConnecting()))) {
+    if (!need_password &&
+        (!same_network || (model_.currentNetworkStatus() == WL_DISCONNECTED &&
+                           !model_.isConnecting()))) {
       // Clicked on an open or remembered network to which we are not already
       // connected or connecting. Interpret as a pure 'action' intent.
-      std::cout << "Calling connect: " << ssid << "\n";
       model_.connect(ssid, password);
       return;
     }
