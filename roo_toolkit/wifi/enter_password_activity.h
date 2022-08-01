@@ -49,6 +49,7 @@ class PasswordBar : public roo_windows::HorizontalLayout {
   }
 
   void edit() { text_.edit(); }
+  void clear() { text_.setContent(""); }
 
   const std::string& passwd() const { return text_.content(); }
 
@@ -78,6 +79,8 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
     pwbar_.edit();
   }
 
+  void clear() { pwbar_.clear(); }
+
   const std::string& passwd() const { return pwbar_.passwd(); }
 
  private:
@@ -103,6 +106,7 @@ class EnterPasswordActivity : public roo_windows::Activity {
   }
 
   void onPause() override { editor_.edit(nullptr); }
+  void onStop() override { contents_.clear(); }
 
  private:
   const std::string& passwd() const { return contents_.passwd(); }
