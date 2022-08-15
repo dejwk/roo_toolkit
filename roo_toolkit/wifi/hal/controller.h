@@ -73,8 +73,8 @@ class Controller {
     Listener* detach() {
       Listener* result = nullptr;
       if (next_ != prev_) {
-        next_->next_->prev_ = next_->prev_;
-        next_->prev_->next_ = next_->next_;
+        next_->prev_ = prev_;
+        prev_->next_ = next_;
         result = next_;
       }
       next_ = nullptr;
@@ -274,6 +274,11 @@ class Controller {
 
   void onConnectionStateChanged(Interface::EventType type) {
     if (type == Interface::EV_UNKNOWN) return;
+    if (type == Interface::EV_DISCONNECTED ||
+        type == Interface::EV_CONNECTION_FAILED ||
+        type == Interface::EV_CONNECTION_LOST) {
+      connecting_ = false;
+    }
     updateCurrentNetwork(current_network_.ssid, current_network_.open,
                          current_network_.rssi, getConnectionStatus(type),
                          true);

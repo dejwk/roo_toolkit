@@ -14,12 +14,12 @@
 namespace roo_toolkit {
 namespace wifi {
 
-class Wifi : public Controller {
+class Esp32Wifi : public Controller {
  public:
-  Wifi(roo_scheduler::Scheduler& scheduler)
+  Esp32Wifi(roo_scheduler::Scheduler& scheduler)
       : Controller(store_, interface_, scheduler),
         store_(),
-        interface_(scheduler) {}
+        interface_() {}
 
   void begin() {
     store_.begin();
@@ -31,8 +31,6 @@ class Wifi : public Controller {
   ArduinoPreferencesStore store_;
   Esp32ArduinoInterface interface_;
 };
-
-// typedef ArduinoWifi Wifi;
 
 }  // namespace wifi
 }  // namespace roo_toolkit

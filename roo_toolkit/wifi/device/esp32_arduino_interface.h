@@ -5,17 +5,35 @@
 #include "Preferences.h"
 #include "WiFi.h"
 #include "roo_scheduler.h"
+#include "roo_toolkit/wifi/device/arduino_preferences_store.h"
 #include "roo_toolkit/wifi/hal/controller.h"
 #include "roo_toolkit/wifi/hal/interface.h"
 #include "roo_toolkit/wifi/hal/store.h"
-#include "roo_toolkit/wifi/device/arduino_preferences_store.h"
 
 namespace roo_toolkit {
 namespace wifi {
 
+namespace internal {
+
+struct Esp32ListenerListNode {
+  std::function<void(system_event_id_t event, system_event_info_t info)>
+      notify_fn;
+  Esp32ListenerListNode* next;
+  Esp32ListenerListNode* prev;
+
+  Esp32ListenerListNode(
+      std::function<void(system_event_id_t event, system_event_info_t info)>
+          notify_fn)
+      : notify_fn(notify_fn), next(nullptr), prev(nullptr) {}
+};
+
+}  // namespace internal
+
 class Esp32ArduinoInterface : public Interface {
  public:
-  Esp32ArduinoInterface(roo_scheduler::Scheduler& scheduler);
+  Esp32ArduinoInterface();
+
+  ~Esp32ArduinoInterface();
 
   void begin();
 
@@ -39,15 +57,12 @@ class Esp32ArduinoInterface : public Interface {
   void removeEventListener(EventListener* listener) override;
 
  private:
-  void checkStatusChanged();
+  void dispatchEvent(WiFiEvent_t event, WiFiEventInfo_t info);
 
-  roo_scheduler::Scheduler& scheduler_;
-
+  internal::Esp32ListenerListNode event_relay_;
   std::unordered_set<EventListener*> listeners_;
 
-  ConnectionStatus status_;
   bool scanning_;
-  roo_scheduler::SingletonTask check_status_changed_;
 };
 
 }  // namespace wifi

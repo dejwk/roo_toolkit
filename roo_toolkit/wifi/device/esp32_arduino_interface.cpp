@@ -1,5 +1,7 @@
 #include "esp32_arduino_interface.h"
 
+#include "WiFiGeneric.h"
+
 namespace roo_toolkit {
 namespace wifi {
 
@@ -24,17 +26,61 @@ static AuthMode authMode(wifi_auth_mode_t mode) {
   }
 }
 
+internal::Esp32ListenerListNode* head = nullptr;
+
+void attach(internal::Esp32ListenerListNode* n) {
+  if (head == nullptr) {
+    n->next = n->prev = n;
+  } else {
+    n->next = head->next;
+    n->prev = head;
+    head->next->prev = n;
+    head->next = n;
+  }
+  head = n;
+}
+
+void detach(internal::Esp32ListenerListNode* n) {
+  internal::Esp32ListenerListNode* new_head = nullptr;
+  if (n->next != n->prev) {
+    n->next->prev = n->prev;
+    n->prev->next = n->next;
+    new_head = n->next;
+  }
+  n->next = n->prev = nullptr;
+  head = new_head;
+}
+
+void dispatch(system_event_id_t event, system_event_info_t info) {
+  if (head == nullptr) return;
+  auto n = head;
+  do {
+    n->notify_fn(event, info);
+    n = n->next;
+  } while (n != head);
+}
+
+void init() {
+  static struct Init {
+    Init() { WiFi.onEvent(&dispatch); }
+  } init;
+}
+
 }  // namespace
 
-Esp32ArduinoInterface::Esp32ArduinoInterface(
-    roo_scheduler::Scheduler& scheduler)
-    : scheduler_(scheduler),
-      status_(WL_DISCONNECTED),
-      scanning_(false),
-      check_status_changed_(&scheduler, [this]() { checkStatusChanged(); }) {}
+Esp32ArduinoInterface::Esp32ArduinoInterface()
+    : event_relay_([&](system_event_id_t event, system_event_info_t info) {
+        dispatchEvent(event, info);
+      }),
+      scanning_(false) {}
+
+Esp32ArduinoInterface::~Esp32ArduinoInterface() {
+  detach(&event_relay_);
+}
 
 void Esp32ArduinoInterface::begin() {
-  checkStatusChanged();
+  init();
+  attach(&event_relay_);
   WiFi.mode(WIFI_STA);
   // // #ifdef ESP32
   // WiFi.onEvent(
@@ -127,18 +173,25 @@ void Esp32ArduinoInterface::removeEventListener(EventListener* listener) {
 
 namespace {
 
-Interface::EventType getEventType(ConnectionStatus status) {
-  switch (status) {
-    case WL_IDLE_STATUS:
+Interface::EventType getEventType(system_event_id_t event, system_event_info_t info) {
+  switch (event) {
+    case SYSTEM_EVENT_SCAN_DONE:
+      return Interface::EV_SCAN_COMPLETED;
+    case SYSTEM_EVENT_STA_CONNECTED:
       return Interface::EV_CONNECTED;
-    case WL_CONNECTED:
+    case SYSTEM_EVENT_STA_GOT_IP:
       return Interface::EV_GOT_IP;
-    case WL_DISCONNECTED:
-      return Interface::EV_DISCONNECTED;
-    case WL_CONNECT_FAILED:
-      return Interface::EV_CONNECTION_FAILED;
-    case WL_CONNECTION_LOST:
-      return Interface::EV_CONNECTION_LOST;
+    case SYSTEM_EVENT_STA_DISCONNECTED: {
+      switch (info.disconnected.reason) {
+        case WIFI_REASON_AUTH_FAIL:
+          return Interface::EV_CONNECTION_FAILED;
+        case WIFI_REASON_BEACON_TIMEOUT:
+        case WIFI_REASON_HANDSHAKE_TIMEOUT:
+          return Interface::EV_CONNECTION_LOST;
+        default:
+          return Interface::EV_DISCONNECTED;
+      }
+    }
     default:
       return Interface::EV_UNKNOWN;
   }
@@ -146,23 +199,14 @@ Interface::EventType getEventType(ConnectionStatus status) {
 
 }  // namespace
 
-void Esp32ArduinoInterface::checkStatusChanged() {
-  ConnectionStatus new_status = getStatus();
-  if (new_status != status_) {
-    status_ = new_status;
-    EventType type = getEventType(status_);
-    for (const auto& l : listeners_) {
-      l->onEvent(type);
-    }
-  }
-  if (scanning_ && WiFi.scanComplete() >= 0) {
+void Esp32ArduinoInterface::dispatchEvent(system_event_id_t event, system_event_info_t info) {
+  EventType type = getEventType(event, info);
+  if (type == Interface::EV_SCAN_COMPLETED) {
     scanning_ = false;
-    for (const auto& l : listeners_) {
-      l->onEvent(EV_SCAN_COMPLETED);
-    }
   }
-
-  check_status_changed_.scheduleAfter(roo_time::Millis(500));
+  for (const auto& l : listeners_) {
+    l->onEvent(type);
+  }
 }
 
 }  // namespace wifi
