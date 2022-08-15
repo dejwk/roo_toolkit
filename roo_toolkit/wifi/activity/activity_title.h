@@ -1,7 +1,7 @@
 #pragma once
 
 #include "roo_windows/containers/horizontal_layout.h"
-#include "roo_windows/widgets/icon_button.h"
+#include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_label.h"
 
 namespace roo_toolkit {
@@ -12,10 +12,16 @@ class ActivityTitle : public roo_windows::HorizontalLayout {
  public:
   ActivityTitle(const roo_windows::Environment& env, const std::string& title);
 
-  void setTitle(const std::string& ssid) { label_.setContent(ssid); }
+  roo_windows::PreferredSize getPreferredSize() const override {
+    return roo_windows::PreferredSize(
+        roo_windows::PreferredSize::MatchParent(),
+        roo_windows::PreferredSize::WrapContent());
+  }
+
+  void setTitle(roo_display::StringView ssid) { label_.setContent(ssid); }
 
  private:
-  roo_windows::IconButton back_;
+  roo_windows::Icon back_;
   roo_windows::TextLabel label_;
 };
 

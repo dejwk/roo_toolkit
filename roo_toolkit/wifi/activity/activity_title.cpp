@@ -1,4 +1,4 @@
-#include "roo_toolkit/wifi/activity_title.h"
+#include "roo_toolkit/wifi/activity/activity_title.h"
 
 #include "roo_material_icons/outlined/24/navigation.h"
 #include "roo_smooth_fonts/NotoSans_CondensedBold/18.h"
@@ -15,6 +15,7 @@ ActivityTitle::ActivityTitle(const roo_windows::Environment& env,
              roo_display::kLeft | roo_display::kMiddle) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
+  label_.setPadding(roo_windows::PADDING_TINY);
   add(back_, roo_windows::HorizontalLayout::Params());
   add(label_, roo_windows::HorizontalLayout::Params().setWeight(1));
   back_.setOnClicked([&]() { getTask()->exitActivity(); });

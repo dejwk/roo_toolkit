@@ -1,8 +1,12 @@
 #pragma once
 
-#include <Arduino.h>
+#include <inttypes.h>
 
-#include "roo_toolkit/wifi/resolved_interface.h"
+#include <string>
+#include <vector>
+
+#include "roo_toolkit/wifi/hal/interface.h"
+#include "roo_toolkit/wifi/hal/store.h"
 
 namespace roo_toolkit {
 namespace wifi {
@@ -28,7 +32,7 @@ ConnectionStatus getConnectionStatus(Interface::EventType type) {
 
 }  // namespace
 
-class WifiModel {
+class Controller {
  public:
   struct Network {
     Network() : ssid(), open(false), rssi(-128) {}
@@ -40,6 +44,8 @@ class WifiModel {
 
   class Listener {
    public:
+    Listener() : next_(nullptr), prev_(nullptr) {}
+
     virtual ~Listener() {}
 
     virtual void onEnableChanged(bool enabled) {}
@@ -47,24 +53,74 @@ class WifiModel {
     virtual void onScanCompleted() {}
     virtual void onCurrentNetworkChanged() {}
     virtual void onConnectionStateChanged(Interface::EventType type) {}
+
+   private:
+    friend class Controller;
+
+    Listener* attach(Listener* list) {
+      if (next_ != nullptr || prev_ != nullptr) return this;
+      if (list == nullptr) {
+        this->next_ = this->prev_ = this;
+      } else {
+        this->next_ = list->next_;
+        this->prev_ = list;
+        list->next_->prev_ = this;
+        list->next_ = this;
+      }
+      return this;
+    }
+
+    Listener* detach() {
+      Listener* result = nullptr;
+      if (next_ != prev_) {
+        next_->next_->prev_ = next_->prev_;
+        next_->prev_->next_ = next_->next_;
+        result = next_;
+      }
+      next_ = nullptr;
+      prev_ = nullptr;
+      return result;
+    }
+
+    Listener* next_;
+    Listener* prev_;
   };
 
-  WifiModel(Wifi& wifi, roo_scheduler::Scheduler& scheduler, Listener& listener)
-      : wifi_(wifi),
+  Controller(Store& store, Interface& interface,
+             roo_scheduler::Scheduler& scheduler)
+      : store_(store),
+        interface_(interface),
+        enabled_(false),
         current_network_(),
         current_network_index_(-1),
         current_network_status_(WL_NO_SSID_AVAIL),
         all_networks_(),
         wifi_listener_(*this),
-        model_listener_(listener),
+        model_listener_list_(nullptr),
         connecting_(false),
         start_scan_(&scheduler, [this]() { startScan(); }),
         refresh_current_network_(
-            &scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {
-    wifi_.addEventListener(&wifi_listener_);
+            &scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {}
+
+  ~Controller() { interface_.removeEventListener(&wifi_listener_); }
+
+  void begin() {
+    interface_.addEventListener(&wifi_listener_);
+    enabled_ = store_.getIsInterfaceEnabled();
+    if (enabled_) notifyEnableChanged();
+    std::string ssid = store_.getDefaultSSID();
+    if (enabled_ && !ssid.empty()) {
+      connect();
+    }
   }
 
-  ~WifiModel() { wifi_.removeEventListener(&wifi_listener_); }
+  void addListener(Listener* listener) {
+    model_listener_list_ = listener->attach(model_listener_list_);
+  }
+
+  void removeListener(Listener* listener) {
+    model_listener_list_ = listener->detach();
+  }
 
   int otherScannedNetworksCount() const {
     int count = all_networks_.size();
@@ -93,44 +149,61 @@ class WifiModel {
   }
 
   bool startScan() {
-    bool started = wifi_.startScan();
+    bool started = interface_.startScan();
     if (started) {
-      model_listener_.onScanStarted();
+      notifyListeners([&](Listener* l) { l->onScanStarted(); });
     }
     return started;
   }
 
-  bool isScanCompleted() const { return wifi_.scanCompleted(); }
-  bool isEnabled() const { return wifi_.isEnabled(); }
+  bool isScanCompleted() const { return interface_.scanCompleted(); }
+  bool isEnabled() const { return enabled_; }
 
   bool isConnecting() const { return connecting_; }
 
   void toggleEnabled() {
-    bool enabled = !wifi_.isEnabled();
-    wifi_.setEnabled(enabled);
+    enabled_ = !enabled_;
+    store_.setIsInterfaceEnabled(enabled_);
+    if (!enabled_) {
+      interface_.disconnect();
+    }
     connecting_ = false;
-    model_listener_.onEnableChanged(enabled);
-    if (enabled) {
+    notifyEnableChanged();
+    if (enabled_) {
       resume();
     } else {
       pause();
     }
   }
 
+  void notifyEnableChanged() {
+    notifyListeners([&](Listener* l) { l->onEnableChanged(enabled_); });
+  }
+
+  void notifyListeners(std::function<void(Listener*)> fn) {
+    if (model_listener_list_ != nullptr) {
+      auto l = model_listener_list_;
+      do {
+        fn(l);
+        l = l->next_;
+      } while (l != model_listener_list_);
+    }
+  }
+
   bool getStoredPassword(const std::string& ssid, std::string& passwd) const {
-    return wifi_.store().getPassword(ssid, passwd);
+    return store_.getPassword(ssid, passwd);
   }
 
   void pause() { start_scan_.cancel(); }
 
   void resume() {
-    if (!wifi_.isEnabled()) return;
+    if (!enabled_) return;
     refreshCurrentNetwork();
     if (!refresh_current_network_.isScheduled()) {
       refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
     }
-    if (wifi_.scanCompleted()) {
-      model_listener_.onScanCompleted();
+    if (interface_.scanCompleted()) {
+      notifyListeners([&](Listener* l) { l->onScanCompleted(); });
       start_scan_.scheduleAfter(roo_time::Seconds(15));
     } else {
       startScan();
@@ -138,21 +211,27 @@ class WifiModel {
   }
 
   void setPassword(const std::string& ssid, const std::string& passwd) {
-    wifi_.store().setPassword(ssid, passwd);
+    store_.setPassword(ssid, passwd);
+  }
+
+  bool connect() {
+    std::string ssid = store_.getDefaultSSID();
+    std::string password;
+    store_.getPassword(ssid, password);
+    return connect(ssid, password);
   }
 
   bool connect(const std::string& ssid, const std::string& passwd) {
-    std::string default_ssid = wifi_.store().getDefaultSSID();
+    std::string default_ssid = store_.getDefaultSSID();
     if (ssid != default_ssid) {
-      wifi_.store().setDefaultSSID(ssid);
+      store_.setDefaultSSID(ssid);
     }
     std::string current_password;
-    if (!passwd.empty() &&
-        (!wifi_.store().getPassword(ssid, current_password) ||
-         current_password != passwd)) {
-      wifi_.store().setPassword(ssid, passwd);
+    if (!passwd.empty() && (!store_.getPassword(ssid, current_password) ||
+                            current_password != passwd)) {
+      store_.setPassword(ssid, passwd);
     }
-    if (!wifi_.connect(ssid, passwd)) return false;
+    if (!interface_.connect(ssid, passwd)) return false;
     connecting_ = true;
     const Network* in_range = lookupNetwork(ssid);
     if (in_range == nullptr) {
@@ -164,10 +243,15 @@ class WifiModel {
     return true;
   }
 
+  void disconnect() {
+    connecting_ = false;
+    interface_.disconnect();
+  }
+
  private:
   class WifiListener : public Interface::EventListener {
    public:
-    WifiListener(WifiModel& wifi) : wifi_(wifi) {}
+    WifiListener(Controller& wifi) : wifi_(wifi) {}
 
     void onEvent(Interface::EventType type) {
       switch (type) {
@@ -183,7 +267,7 @@ class WifiModel {
     }
 
    private:
-    WifiModel& wifi_;
+    Controller& wifi_;
   };
 
   friend class WifiListener;
@@ -193,7 +277,7 @@ class WifiModel {
     updateCurrentNetwork(current_network_.ssid, current_network_.open,
                          current_network_.rssi, getConnectionStatus(type),
                          true);
-    model_listener_.onConnectionStateChanged(type);
+    notifyListeners([&](Listener* l) { l->onConnectionStateChanged(type); });
   }
 
   void periodicRefreshCurrentNetwork() {
@@ -206,14 +290,14 @@ class WifiModel {
   void refreshCurrentNetwork() {
     // If we're connected to the network, this is it.
     NetworkDetails current;
-    if (wifi_.getApInfo(&current)) {
+    if (interface_.getApInfo(&current)) {
       updateCurrentNetwork(std::string((const char*)current.ssid,
                                        strlen((const char*)current.ssid)),
                            (current.authmode == WIFI_AUTH_OPEN), current.rssi,
                            current.status, false);
     } else {
       // Check if we have a default network.
-      std::string default_ssid = wifi_.store().getDefaultSSID();
+      std::string default_ssid = store_.getDefaultSSID();
       const Network* default_network_in_range = nullptr;
       if (!default_ssid.empty()) {
         // See if the default network is in range according to the latest
@@ -255,13 +339,13 @@ class WifiModel {
         break;
       }
     }
-    model_listener_.onCurrentNetworkChanged();
+    notifyListeners([&](Listener* l) { l->onCurrentNetworkChanged(); });
   }
 
   void onScanCompleted() {
     current_network_index_ = -1;
     std::vector<NetworkDetails> raw_data;
-    wifi_.getScanResults(&raw_data, 100);
+    interface_.getScanResults(&raw_data, 100);
     int raw_count = raw_data.size();
     if (raw_count == 0) {
       all_networks_.clear();
@@ -316,19 +400,21 @@ class WifiModel {
     if (!found && current_network_status_ == WL_DISCONNECTED) {
       current_network_status_ = WL_NO_SSID_AVAIL;
     }
-    model_listener_.onScanCompleted();
-    if (wifi_.isEnabled()) {
+    notifyListeners([&](Listener* l) { l->onScanCompleted(); });
+    if (enabled_) {
       start_scan_.scheduleAfter(roo_time::Seconds(15));
     }
   }
 
-  Wifi& wifi_;
+  Store& store_;
+  Interface& interface_;
+  bool enabled_;
   Network current_network_;
   int16_t current_network_index_;
   ConnectionStatus current_network_status_;
   std::vector<Network> all_networks_;
   WifiListener wifi_listener_;
-  Listener& model_listener_;
+  Listener* model_listener_list_;
   bool connecting_;
 
   roo_scheduler::SingletonTask start_scan_;
@@ -336,8 +422,8 @@ class WifiModel {
 };
 
 inline const char* StatusAsString(ConnectionStatus status, bool connecting) {
-  return (connecting && (status == WL_DISCONNECTED ||
-                         status == WL_NO_SSID_AVAIL))
+  return (connecting &&
+          (status == WL_DISCONNECTED || status == WL_NO_SSID_AVAIL))
              ? "Connecting"
          : (status == WL_IDLE_STATUS)     ? "Connected, no Internet"
          : (status == WL_NO_SSID_AVAIL)   ? "Out of range"

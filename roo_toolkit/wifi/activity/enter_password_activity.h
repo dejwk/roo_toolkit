@@ -2,13 +2,12 @@
 
 #include "roo_material_icons/outlined/24/navigation.h"
 #include "roo_smooth_fonts/NotoSans_Regular/18.h"
-#include "roo_toolkit/wifi/activity_title.h"
-#include "roo_toolkit/wifi/model.h"
-#include "roo_toolkit/wifi/resolved_interface.h"
+#include "roo_toolkit/wifi/activity/activity_title.h"
+#include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
 #include "roo_windows/core/task.h"
-#include "roo_windows/widgets/icon_button.h"
+#include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_field.h"
 
 namespace roo_toolkit {
@@ -38,6 +37,7 @@ class PasswordBar : public roo_windows::HorizontalLayout {
         text_(env, editor, confirm_fn),
         enter_(env, ic_outlined_24_navigation_check()) {
     text_.setStarred(true);
+    text_.setPadding(roo_windows::PADDING_TINY);
     visibility_.setOff();
     visibility_.setOnClicked([this]() { visibilityChanged(); });
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
@@ -48,7 +48,11 @@ class PasswordBar : public roo_windows::HorizontalLayout {
     enter_.setOnClicked(confirm_fn);
   }
 
-  void edit() { text_.edit(); }
+  void edit(roo_display::StringView hint) {
+    text_.setHint(hint);
+    text_.edit();
+  }
+
   void clear() { text_.setContent(""); }
 
   const std::string& passwd() const { return text_.content(); }
@@ -74,9 +78,9 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
     add(pwbar_, VerticalLayout::Params());
   }
 
-  void enter(const std::string& ssid) {
+  void enter(roo_display::StringView ssid, const roo_display::StringView hint) {
     title_.setTitle(ssid);
-    pwbar_.edit();
+    pwbar_.edit(hint);
   }
 
   void clear() { pwbar_.clear(); }
@@ -84,10 +88,6 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
   const std::string& passwd() const { return pwbar_.passwd(); }
 
  private:
-  // void confirm() { getTask()->exitActivity(); }
-
-  // Wifi& wifi_;
-
   ActivityTitle title_;
   PasswordBar pwbar_;
 };
@@ -96,13 +96,15 @@ class EnterPasswordActivity : public roo_windows::Activity {
  public:
   EnterPasswordActivity(const roo_windows::Environment& env,
                         roo_windows::TextFieldEditor& editor,
-                        WifiModel& wifi_model);
+                        Controller& wifi_model);
 
   roo_windows::Widget& getContents() override { return contents_; }
 
-  void enter(const std::string& ssid) {
+  void enter(roo_windows::Task& task, const std::string& ssid,
+             roo_display::StringView hint) {
+    task.enterActivity(this);
     ssid_ = &ssid;
-    contents_.enter(ssid);
+    contents_.enter(ssid, hint);
   }
 
   void onPause() override { editor_.edit(nullptr); }
@@ -113,7 +115,7 @@ class EnterPasswordActivity : public roo_windows::Activity {
 
   void confirm();
 
-  WifiModel& wifi_model_;
+  Controller& wifi_model_;
   const std::string* ssid_;
   roo_windows::TextFieldEditor& editor_;
   EnterPasswordActivityContents contents_;

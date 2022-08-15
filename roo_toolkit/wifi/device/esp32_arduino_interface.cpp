@@ -1,32 +1,9 @@
-#include "arduino_interface.h"
+#include "esp32_arduino_interface.h"
 
 namespace roo_toolkit {
 namespace wifi {
 
 namespace {
-
-uint64_t inline MurmurOAAT64(const char* key) {
-  uint64_t h(525201411107845655ull);
-  for (; *key != '\0'; ++key) {
-    h ^= *key;
-    h *= 0x5bd1e9955bd1e995;
-    h ^= h >> 47;
-  }
-  return h;
-}
-
-void ToSsiPwdKey(const std::string& ssid, char* result) {
-  uint64_t hash = MurmurOAAT64(ssid.c_str());
-  *result++ = 'p';
-  *result++ = 'w';
-  *result++ = '-';
-  // We break 64 bits into 11 groups of 6 bits; then to ASCII.
-  for (int i = 0; i < 11; i++) {
-    *result++ = (hash & 0x3F) + 48;  // ASCII from '0' to 'o'.
-    hash >>= 6;
-  }
-  *result = '\0';
-}
 
 static AuthMode authMode(wifi_auth_mode_t mode) {
   switch (mode) {
@@ -49,55 +26,14 @@ static AuthMode authMode(wifi_auth_mode_t mode) {
 
 }  // namespace
 
-bool ArduinoStore::getIsInterfaceEnabled() {
-  return preferences_.getBool("enabled", false);
-}
-
-void ArduinoStore::setIsInterfaceEnabled(bool enabled) {
-  preferences_.putBool("enabled", enabled);
-}
-
-std::string ArduinoStore::getDefaultSSID() {
-  if (!preferences_.isKey("ssid")) return "";
-  char result[33];
-  preferences_.getString("ssid", result, 33);
-  return std::string(result);
-}
-
-void ArduinoStore::setDefaultSSID(const std::string& ssid) {
-  preferences_.putString("ssid", ssid.c_str());
-}
-
-bool ArduinoStore::getPassword(const std::string& ssid, std::string& password) {
-  char pwkey[16];
-  ToSsiPwdKey(ssid, pwkey);
-  if (!preferences_.isKey(pwkey)) return false;
-  char pwd[128];
-  size_t len = preferences_.getString(pwkey, pwd, 128);
-  password = std::string(pwd, len);
-  return true;
-}
-
-void ArduinoStore::setPassword(const std::string& ssid,
-                               const std::string& password) {
-  char pwkey[16];
-  ToSsiPwdKey(ssid, pwkey);
-  preferences_.putString(pwkey, password.c_str());
-}
-
-void ArduinoStore::clearPassword(const std::string& ssid) {
-  char pwkey[16];
-  ToSsiPwdKey(ssid, pwkey);
-  preferences_.remove(pwkey);
-}
-
-ArduinoInterface::ArduinoInterface(roo_scheduler::Scheduler& scheduler)
+Esp32ArduinoInterface::Esp32ArduinoInterface(
+    roo_scheduler::Scheduler& scheduler)
     : scheduler_(scheduler),
       status_(WL_DISCONNECTED),
       scanning_(false),
       check_status_changed_(&scheduler, [this]() { checkStatusChanged(); }) {}
 
-void ArduinoInterface::begin() {
+void Esp32ArduinoInterface::begin() {
   checkStatusChanged();
   WiFi.mode(WIFI_STA);
   // // #ifdef ESP32
@@ -111,7 +47,7 @@ void ArduinoInterface::begin() {
   // // #endif
 }
 
-bool ArduinoInterface::getApInfo(NetworkDetails* info) const {
+bool Esp32ArduinoInterface::getApInfo(NetworkDetails* info) const {
   const String& ssid = WiFi.SSID();
   if (ssid.length() == 0) return false;
   memcpy(info->ssid, ssid.c_str(), ssid.length());
@@ -132,18 +68,18 @@ bool ArduinoInterface::getApInfo(NetworkDetails* info) const {
   return true;
 }
 
-bool ArduinoInterface::startScan() {
+bool Esp32ArduinoInterface::startScan() {
   scanning_ = (WiFi.scanNetworks(true, false) == WIFI_SCAN_RUNNING);
   return scanning_;
 }
 
-bool ArduinoInterface::scanCompleted() const {
+bool Esp32ArduinoInterface::scanCompleted() const {
   bool completed = WiFi.scanComplete() >= 0;
   return completed;
 }
 
-bool ArduinoInterface::getScanResults(std::vector<NetworkDetails>* list,
-                                      int max_count) const {
+bool Esp32ArduinoInterface::getScanResults(std::vector<NetworkDetails>* list,
+                                           int max_count) const {
   int16_t result = WiFi.scanComplete();
   if (result < 0) return false;
   if (max_count > result) {
@@ -169,23 +105,23 @@ bool ArduinoInterface::getScanResults(std::vector<NetworkDetails>* list,
   return true;
 }
 
-void ArduinoInterface::disconnect() { WiFi.disconnect(); }
+void Esp32ArduinoInterface::disconnect() { WiFi.disconnect(); }
 
-bool ArduinoInterface::connect(const std::string& ssid,
-                               const std::string& passwd) {
+bool Esp32ArduinoInterface::connect(const std::string& ssid,
+                                    const std::string& passwd) {
   WiFi.begin(ssid.c_str(), passwd.c_str());
   return true;
 }
 
-ConnectionStatus ArduinoInterface::getStatus() {
+ConnectionStatus Esp32ArduinoInterface::getStatus() {
   return (ConnectionStatus)WiFi.status();
 }
 
-void ArduinoInterface::addEventListener(EventListener* listener) {
+void Esp32ArduinoInterface::addEventListener(EventListener* listener) {
   listeners_.insert(listener);
 }
 
-void ArduinoInterface::removeEventListener(EventListener* listener) {
+void Esp32ArduinoInterface::removeEventListener(EventListener* listener) {
   listeners_.erase(listener);
 }
 
@@ -210,7 +146,7 @@ Interface::EventType getEventType(ConnectionStatus status) {
 
 }  // namespace
 
-void ArduinoInterface::checkStatusChanged() {
+void Esp32ArduinoInterface::checkStatusChanged() {
   ConnectionStatus new_status = getStatus();
   if (new_status != status_) {
     status_ = new_status;

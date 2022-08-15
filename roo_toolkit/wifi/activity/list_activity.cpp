@@ -1,4 +1,4 @@
-#include "roo_toolkit/wifi/list_activity.h"
+#include "roo_toolkit/wifi/activity/list_activity.h"
 
 #include "roo_material_icons/filled/24/action.h"
 #include "roo_material_icons/outlined/24/navigation.h"
@@ -6,9 +6,10 @@
 #include "roo_smooth_fonts/NotoSans_Condensed/12.h"
 #include "roo_smooth_fonts/NotoSans_Condensed/18.h"
 #include "roo_smooth_fonts/NotoSans_Condensed/27.h"
+#include "roo_smooth_fonts/NotoSans_Condensed/90.h"
 #include "roo_smooth_fonts/NotoSans_CondensedBold/18.h"
 #include "roo_smooth_fonts/NotoSans_Regular/15.h"
-#include "roo_toolkit/wifi/wifi.h"
+#include "roo_toolkit/wifi/activity/wifi.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
 #include "roo_windows/containers/scrollable_panel.h"
@@ -19,7 +20,7 @@
 #include "roo_windows/indicators/24/wifi.h"
 #include "roo_windows/widgets/blank.h"
 #include "roo_windows/widgets/divider.h"
-#include "roo_windows/widgets/icon_button.h"
+#include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/progress_bar.h"
 #include "roo_windows/widgets/switch.h"
 #include "roo_windows/widgets/text_label.h"
@@ -38,6 +39,7 @@ WifiListItem::WifiListItem(const roo_windows::Environment& env,
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
   add(icon_, HorizontalLayout::Params());
+  ssid_.setPadding(roo_windows::PADDING_TINY);
   add(ssid_, HorizontalLayout::Params().setWeight(1));
   add(lock_icon_, HorizontalLayout::Params());
   icon_.setConnectionStatus(roo_windows::WifiIndicator::CONNECTED);
@@ -55,13 +57,13 @@ WifiListItem::WifiListItem(const WifiListItem& other)
 }
 
 // Sets this item to show the specified network.
-void WifiListItem::set(const WifiModel::Network& network) {
+void WifiListItem::set(const Controller::Network& network) {
   ssid_.setContent(network.ssid);
   icon_.setWifiSignalStrength(network.rssi);
   lock_icon_.setVisibility(network.open ? INVISIBLE : VISIBLE);
 }
 
-WifiListModel::WifiListModel(WifiModel& wifi_model) : wifi_model_(wifi_model) {}
+WifiListModel::WifiListModel(Controller& wifi_model) : wifi_model_(wifi_model) {}
 
 int WifiListModel::elementCount() {
   return wifi_model_.otherScannedNetworksCount();
@@ -71,7 +73,7 @@ void WifiListModel::set(int idx, WifiListItem& dest) {
   dest.set(wifi_model_.otherNetwork(idx));
 }
 
-Enable::Enable(const roo_windows::Environment& env, WifiModel& model)
+Enable::Enable(const roo_windows::Environment& env, Controller& model)
     : HorizontalLayout(env),
       model_(model),
       gap_(env, roo_windows::Dimensions(24, 24)),
@@ -82,6 +84,7 @@ Enable::Enable(const roo_windows::Environment& env, WifiModel& model)
                                   roo_windows::kVerticalGravityMiddle));
   setPadding(roo_windows::Padding(0, -4));
   add(gap_, roo_windows::HorizontalLayout::Params());
+  label_.setPadding(roo_windows::PADDING_TINY);
   add(label_, roo_windows::HorizontalLayout::Params().setWeight(1));
   add(switch_, roo_windows::HorizontalLayout::Params());
   enabled_color_ = env.theme().color.secondary;
@@ -102,22 +105,30 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
     : HorizontalLayout(env),
       indicator_(env),
       ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
-            roo_display::kLeft | roo_display::kBottom),
+            roo_display::kLeft | roo_display::kMiddle),
       status_(env, "Disconnected", roo_display::font_NotoSans_Condensed_12(),
-              roo_display::kLeft | roo_display::kTop),
+              roo_display::kLeft | roo_display::kMiddle),
       ssid_status_(env),
       on_click_(on_click) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
+  setPadding(roo_windows::Padding(roo_windows::PADDING_NONE, roo_windows::PADDING_NONE));
   add(indicator_, HorizontalLayout::Params());
+  ssid_.setPadding(roo_windows::PADDING_TINY, roo_windows::PADDING_NONE);
+  ssid_.setMargins(roo_windows::MARGIN_NONE);
+  status_.setPadding(roo_windows::PADDING_TINY, roo_windows::PADDING_NONE);
+  status_.setMargins(roo_windows::MARGIN_NONE);
+  ssid_status_.setPadding(roo_windows::Padding(roo_windows::PADDING_NONE, roo_windows::PADDING_NONE));
+  ssid_status_.setMargins(roo_windows::Margins(roo_windows::MARGIN_REGULAR, roo_windows::MARGIN_REGULAR));
+  // ssid_status_.setMargins(roo_windows::MARGIN_REGULAR);
   ssid_status_.add(ssid_, roo_windows::VerticalLayout::Params());
   ssid_status_.add(status_, roo_windows::VerticalLayout::Params());
   add(ssid_status_, HorizontalLayout::Params().setWeight(1));
   indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
 }
 
-void CurrentNetwork::onChange(const WifiModel& model) {
-  const WifiModel::Network& current = model.currentNetwork();
+void CurrentNetwork::onChange(const Controller& model) {
+  const Controller::Network& current = model.currentNetwork();
   indicator_.setWifiSignalStrength(current.rssi);
   ssid_.setContent(current.ssid);
   switch (model.currentNetworkStatus()) {
@@ -140,7 +151,7 @@ void CurrentNetwork::onChange(const WifiModel& model) {
 }
 
 ListActivityContents::ListActivityContents(
-    const roo_windows::Environment& env, WifiModel& wifi_model,
+    const roo_windows::Environment& env, Controller& wifi_model,
     NetworkSelectedFn network_selected_fn)
     : VerticalLayout(env),
       wifi_model_(wifi_model),
@@ -193,7 +204,7 @@ void ListActivityContents::onCurrentNetworkChanged() {
 }
 
 ListActivity::ListActivity(const roo_windows::Environment& env,
-                           WifiModel& wifi_model,
+                           Controller& wifi_model,
                            NetworkSelectedFn network_selected_fn)
     : wifi_model_(wifi_model),
       contents_(env, wifi_model, network_selected_fn),

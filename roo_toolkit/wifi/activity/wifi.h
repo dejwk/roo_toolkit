@@ -2,35 +2,42 @@
 
 #include <Arduino.h>
 
-#include "roo_toolkit/wifi/enter_password_activity.h"
-#include "roo_toolkit/wifi/list_activity.h"
-#include "roo_toolkit/wifi/model.h"
-#include "roo_toolkit/wifi/network_details_activity.h"
-#include "roo_toolkit/wifi/resolved_interface.h"
+#include "roo_toolkit/wifi/activity/enter_password_activity.h"
+#include "roo_toolkit/wifi/activity/list_activity.h"
+#include "roo_toolkit/wifi/activity/network_details_activity.h"
+#include "roo_toolkit/wifi/device/resolved_interface.h"
 
 namespace roo_toolkit {
 namespace wifi {
 
 class WifiSetup {
  public:
-  WifiSetup(const roo_windows::Environment& env, Wifi& wifi,
+  WifiSetup(const roo_windows::Environment& env, Controller& controller,
             roo_windows::TextFieldEditor& editor,
             roo_scheduler::Scheduler& scheduler)
-      : model_listener_(*this),
-        model_(wifi, scheduler, model_listener_),
-        list_(env, model_,
+      : controller_(controller),
+        model_listener_(*this),
+        // model_(controller, scheduler, model_listener_),
+        list_(env, controller_,
               [this](roo_windows::Task& task, const std::string& ssid) {
                 networkSelected(task, ssid);
               }),
-        details_(env, model_),
-        enter_password_(env, editor, model_) {}
+        details_(env, controller_,
+                 [this](roo_windows::Task& task, const std::string& ssid) {
+                   networkEdited(task, ssid);
+                 }),
+        enter_password_(env, editor, controller_) {
+    controller_.addListener(&model_listener_);
+  }
 
   roo_windows::Activity& main() { return list_; }
 
   roo_windows::Activity& enter_password() { return enter_password_; }
 
+  ~WifiSetup() { controller_.removeListener(&model_listener_); }
+
  private:
-  class ModelListener : public WifiModel::Listener {
+  class ModelListener : public Controller::Listener {
    public:
     ModelListener(WifiSetup& wifi) : wifi_(wifi) {}
 
@@ -73,33 +80,38 @@ class WifiSetup {
   }
 
   void networkSelected(roo_windows::Task& task, const std::string& ssid) {
-    const WifiModel::Network* network = model_.lookupNetwork(ssid);
+    const Controller::Network* network = controller_.lookupNetwork(ssid);
     std::string password;
-    bool same_network = (ssid == model_.currentNetwork().ssid);
+    bool same_network = (ssid == controller_.currentNetwork().ssid);
     bool has_password = false;
-    if (!same_network || model_.currentNetworkStatus() != WL_CONNECT_FAILED) {
-      has_password = model_.getStoredPassword(ssid, password);
+    if (!same_network ||
+        controller_.currentNetworkStatus() != WL_CONNECT_FAILED) {
+      has_password = controller_.getStoredPassword(ssid, password);
     }
     bool need_password =
         (network != nullptr && !network->open && !has_password);
     if (!need_password &&
-        (!same_network || (model_.currentNetworkStatus() == WL_DISCONNECTED &&
-                           !model_.isConnecting()))) {
+        (!same_network ||
+         (controller_.currentNetworkStatus() == WL_DISCONNECTED &&
+          !controller_.isConnecting()))) {
       // Clicked on an open or remembered network to which we are not already
       // connected or connecting. Interpret as a pure 'action' intent.
-      model_.connect(ssid, password);
+      controller_.connect(ssid, password);
       return;
     }
     if (need_password) {
-      task.enterActivity(&enter_password_);
-      enter_password_.enter(ssid);
+      enter_password_.enter(task, ssid, "enter password");
     } else {
       details_.enter(task, ssid);
     }
   }
 
+  void networkEdited(roo_windows::Task& task, const std::string& ssid) {
+    enter_password_.enter(task, ssid, "(unchanged)");
+  }
+
+  Controller& controller_;
   ModelListener model_listener_;
-  WifiModel model_;
   ListActivity list_;
   NetworkDetailsActivity details_;
   EnterPasswordActivity enter_password_;
