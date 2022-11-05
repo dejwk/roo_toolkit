@@ -16,7 +16,8 @@ cc_library(
         "ARDUINO=10805",
     ],
     deps = [
-        "//roo_testing:arduino",
+        "//roo_testing/frameworks/arduino-esp32-2.0.4/libraries/Preferences",
+        "//roo_testing/frameworks/arduino-esp32-2.0.4/libraries/WiFi",
         "//lib/roo_display",
         "//lib/roo_windows",
         "//lib/roo_glog",
