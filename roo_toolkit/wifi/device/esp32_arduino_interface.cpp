@@ -51,7 +51,7 @@ void detach(internal::Esp32ListenerListNode* n) {
   head = new_head;
 }
 
-void dispatch(system_event_id_t event, system_event_info_t info) {
+void dispatch(arduino_event_id_t event, arduino_event_info_t info) {
   if (head == nullptr) return;
   auto n = head;
   do {
@@ -69,7 +69,7 @@ void init() {
 }  // namespace
 
 Esp32ArduinoInterface::Esp32ArduinoInterface()
-    : event_relay_([&](system_event_id_t event, system_event_info_t info) {
+    : event_relay_([&](arduino_event_id_t event, arduino_event_info_t info) {
         dispatchEvent(event, info);
       }),
       scanning_(false) {}
@@ -84,12 +84,12 @@ void Esp32ArduinoInterface::begin() {
   WiFi.mode(WIFI_STA);
   // // #ifdef ESP32
   // WiFi.onEvent(
-  //     [this](system_event_id_t event) {
+  //     [this](arduino_event_id_t event) {
   //       for (const auto& l : listeners_) {
   //         l->scanCompleted();
   //       }
   //     },
-  //     SYSTEM_EVENT_SCAN_DONE);
+  //     arduino_EVENT_SCAN_DONE);
   // // #endif
 }
 
@@ -173,16 +173,16 @@ void Esp32ArduinoInterface::removeEventListener(EventListener* listener) {
 
 namespace {
 
-Interface::EventType getEventType(system_event_id_t event, system_event_info_t info) {
+Interface::EventType getEventType(arduino_event_id_t event, arduino_event_info_t info) {
   switch (event) {
-    case SYSTEM_EVENT_SCAN_DONE:
+    case ARDUINO_EVENT_WIFI_SCAN_DONE:
       return Interface::EV_SCAN_COMPLETED;
-    case SYSTEM_EVENT_STA_CONNECTED:
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
       return Interface::EV_CONNECTED;
-    case SYSTEM_EVENT_STA_GOT_IP:
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
       return Interface::EV_GOT_IP;
-    case SYSTEM_EVENT_STA_DISCONNECTED: {
-      switch (info.disconnected.reason) {
+    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+      switch (info.wifi_sta_disconnected.reason) {
         case WIFI_REASON_AUTH_FAIL:
           return Interface::EV_CONNECTION_FAILED;
         case WIFI_REASON_BEACON_TIMEOUT:
@@ -199,7 +199,7 @@ Interface::EventType getEventType(system_event_id_t event, system_event_info_t i
 
 }  // namespace
 
-void Esp32ArduinoInterface::dispatchEvent(system_event_id_t event, system_event_info_t info) {
+void Esp32ArduinoInterface::dispatchEvent(arduino_event_id_t event, arduino_event_info_t info) {
   EventType type = getEventType(event, info);
   if (type == Interface::EV_SCAN_COMPLETED) {
     scanning_ = false;

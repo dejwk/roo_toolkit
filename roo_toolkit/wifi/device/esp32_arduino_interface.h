@@ -16,13 +16,13 @@ namespace wifi {
 namespace internal {
 
 struct Esp32ListenerListNode {
-  std::function<void(system_event_id_t event, system_event_info_t info)>
+  std::function<void(arduino_event_id_t event, arduino_event_info_t info)>
       notify_fn;
   Esp32ListenerListNode* next;
   Esp32ListenerListNode* prev;
 
   Esp32ListenerListNode(
-      std::function<void(system_event_id_t event, system_event_info_t info)>
+      std::function<void(arduino_event_id_t event, arduino_event_info_t info)>
           notify_fn)
       : notify_fn(notify_fn), next(nullptr), prev(nullptr) {}
 };
