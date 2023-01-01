@@ -36,10 +36,10 @@ class Log : public roo_windows::BasicWidget {
 
   roo_windows::PreferredSize getPreferredSize() const override;
 
-  roo_windows::Dimensions onMeasure(roo_windows::MeasureSpec width,
-                                    roo_windows::MeasureSpec height) override;
+  roo_windows::Dimensions onMeasure(roo_windows::WidthSpec width,
+                                    roo_windows::HeightSpec height) override;
 
-  bool paint(const roo_display::Surface& s) override;
+  void paint(const roo_windows::Canvas& s) const override;
 
  private:
   int16_t maxLineWidth() const;

@@ -14,8 +14,8 @@ class ActivityTitle : public roo_windows::HorizontalLayout {
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
-        roo_windows::PreferredSize::MatchParent(),
-        roo_windows::PreferredSize::WrapContent());
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
   }
 
   void setTitle(roo_display::StringView ssid) { label_.setContent(ssid); }

@@ -77,6 +77,12 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     add(actions_, VerticalLayout::Params());
   }
 
+  roo_windows::PreferredSize getPreferredSize() const override {
+    return roo_windows::PreferredSize(
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
+  }
+
   void enter(const std::string& ssid) { ssid_.setContent(ssid); }
 
   void onDetailsChanged(int16_t rssi, ConnectionStatus status,
@@ -120,13 +126,9 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
   }
 
  private:
-  void connect() {
-    wifi_model_.connect();
-  }
+  void connect() { wifi_model_.connect(); }
 
-  void disconnect() {
-    wifi_model_.disconnect();
-  }
+  void disconnect() { wifi_model_.disconnect(); }
 
   Controller& wifi_model_;
   ActivityTitle title_;

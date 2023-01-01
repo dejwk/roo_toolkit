@@ -41,8 +41,8 @@ class WifiListItem : public roo_windows::HorizontalLayout {
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
-        roo_windows::PreferredSize::MatchParent(),
-        roo_windows::PreferredSize::WrapContent());
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
   }
 
   void onClicked() override { on_click_(*getTask(), ssid_.content()); }
@@ -81,8 +81,8 @@ class Enable : public roo_windows::HorizontalLayout {
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
-        roo_windows::PreferredSize::MatchParent(),
-        roo_windows::PreferredSize::WrapContent());
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
   }
 
   bool isClickable() const override { return true; }
@@ -116,8 +116,8 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
-        roo_windows::PreferredSize::MatchParent(),
-        roo_windows::PreferredSize::WrapContent());
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
   }
 
  private:

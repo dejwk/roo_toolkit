@@ -2,8 +2,6 @@
 
 #include <unordered_set>
 
-#include "Preferences.h"
-#include "WiFi.h"
 #include "roo_scheduler.h"
 #include "roo_toolkit/wifi/device/arduino_preferences_store.h"
 #include "roo_toolkit/wifi/hal/controller.h"
