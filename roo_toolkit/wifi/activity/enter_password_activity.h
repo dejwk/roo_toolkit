@@ -62,7 +62,7 @@ class PasswordBar : public roo_windows::HorizontalLayout {
 
   roo_windows::VisibilityToggle visibility_;
   EditedPassword text_;
-  roo_windows::Button enter_;
+  roo_windows::SimpleButton enter_;
 };
 
 // All of the widgets of the 'enter password' activity.

@@ -98,9 +98,9 @@ class Controller {
         wifi_listener_(*this),
         model_listener_list_(nullptr),
         connecting_(false),
-        start_scan_(&scheduler, [this]() { startScan(); }),
+        start_scan_(scheduler, [this]() { startScan(); }),
         refresh_current_network_(
-            &scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {}
+            scheduler, [this]() { periodicRefreshCurrentNetwork(); }) {}
 
   ~Controller() { interface_.removeEventListener(&wifi_listener_); }
 
