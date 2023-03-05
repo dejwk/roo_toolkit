@@ -1,7 +1,7 @@
 #pragma once
 
-#include "roo_material_icons/outlined/24/navigation.h"
-#include "roo_smooth_fonts/NotoSans_Regular/18.h"
+// #include "roo_material_icons/outlined/24/navigation.h"
+// #include "roo_smooth_fonts/NotoSans_Regular/18.h"
 #include "roo_toolkit/wifi/activity/activity_title.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/vertical_layout.h"
@@ -9,6 +9,11 @@
 #include "roo_windows/core/task.h"
 #include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_field.h"
+
+#include "roo_material_icons/outlined/18/navigation.h"
+#include "roo_material_icons/outlined/24/navigation.h"
+#include "roo_material_icons/outlined/36/navigation.h"
+#include "roo_material_icons/outlined/48/navigation.h"
 
 namespace roo_toolkit {
 namespace wifi {
@@ -35,8 +40,9 @@ class PasswordBar : public roo_windows::HorizontalLayout {
       : roo_windows::HorizontalLayout(env),
         visibility_(env),
         text_(env, editor, confirm_fn),
-        enter_(env, ic_outlined_24_navigation_check()) {
+        enter_(env, SCALED_ROO_ICON(outlined, navigation_check)) {
     text_.setStarred(true);
+    text_.setMargins(roo_windows::MARGIN_NONE);
     text_.setPadding(roo_windows::PADDING_TINY);
     visibility_.setOff();
     visibility_.setOnClicked([this]() { visibilityChanged(); });

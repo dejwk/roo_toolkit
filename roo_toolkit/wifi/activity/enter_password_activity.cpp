@@ -6,7 +6,7 @@ namespace wifi {
 EditedPassword::EditedPassword(const roo_windows::Environment& env,
                                roo_windows::TextFieldEditor& editor,
                                std::function<void()> confirm_fn)
-    : TextField(env, editor, roo_display::font_NotoSans_Regular_18(),
+    : TextField(env, editor, roo_windows::font_subtitle1(),
                 "", roo_display::kLeft | roo_display::kMiddle,
                 UNDERLINE),
       confirm_fn_(confirm_fn) {}

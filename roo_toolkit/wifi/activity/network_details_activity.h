@@ -1,14 +1,20 @@
 #pragma once
 
+#include "roo_windows/config.h"
+
+#include "roo_material_icons/filled/18/action.h"
 #include "roo_material_icons/filled/24/action.h"
+#include "roo_material_icons/filled/36/action.h"
+#include "roo_material_icons/filled/48/action.h"
+#include "roo_material_icons/filled/18/content.h"
 #include "roo_material_icons/filled/24/content.h"
+#include "roo_material_icons/filled/36/content.h"
+#include "roo_material_icons/filled/48/content.h"
+#include "roo_material_icons/filled/18/notification.h"
 #include "roo_material_icons/filled/24/notification.h"
-#include "roo_smooth_fonts/NotoSans_Condensed/15.h"
-#include "roo_smooth_fonts/NotoSans_Condensed/18.h"
-#include "roo_smooth_fonts/NotoSans_Condensed/27.h"
-#include "roo_smooth_fonts/NotoSans_CondensedBold/18.h"
-#include "roo_smooth_fonts/NotoSans_Regular/15.h"
-#include "roo_smooth_fonts/NotoSans_Regular/18.h"
+#include "roo_material_icons/filled/36/notification.h"
+#include "roo_material_icons/filled/48/notification.h"
+
 #include "roo_toolkit/wifi/activity/activity_title.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/horizontal_layout.h"
@@ -16,7 +22,7 @@
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
 #include "roo_windows/core/task.h"
-#include "roo_windows/indicators/36/wifi.h"
+#include "roo_windows/indicators/wifi.h"
 #include "roo_windows/widgets/divider.h"
 #include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/icon_with_caption.h"
@@ -37,16 +43,17 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
       : roo_windows::VerticalLayout(env),
         wifi_model_(model),
         title_(env, "Network details"),
-        edit_(env, ic_filled_24_content_create()),
+        edit_(env, SCALED_ROO_ICON(filled, content_create)),
         indicator_(env),
-        ssid_(env, "", roo_display::font_NotoSans_Condensed_18(),
+        ssid_(env, "", roo_windows::font_subtitle1(),
               roo_display::kCenter | roo_display::kMiddle),
-        status_(env, "", roo_display::font_NotoSans_Condensed_15(),
+        status_(env, "", roo_windows::font_caption(),
                 roo_display::kCenter | roo_display::kMiddle),
         d1_(env),
         actions_(env),
-        button_forget_(env, ic_filled_24_action_delete(), "Forget"),
-        button_connect_(env, ic_filled_24_notification_wifi(), "Connect") {
+        button_forget_(env, SCALED_ROO_ICON(filled, action_delete), "Forget"),
+        button_connect_(env, SCALED_ROO_ICON(filled, notification_wifi),
+                        "Connect") {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
     edit_.setOnClicked(edit_fn);
@@ -64,8 +71,8 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     add(d1_, VerticalLayout::Params().setWeight(1));
     indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
     actions_.setUseLargestChild(true);
-    button_forget_.setPadding(roo_windows::PADDING_HUGE);
-    button_connect_.setPadding(roo_windows::PADDING_HUGE);
+    button_forget_.setPadding(roo_windows::PADDING_LARGE, roo_windows::PADDING_SMALL);
+    button_connect_.setPadding(roo_windows::PADDING_LARGE, roo_windows::PADDING_SMALL);
     roo_display::Color pri = env.theme().color.primary;
     button_forget_.setColor(pri);
     button_connect_.setColor(pri);
@@ -107,19 +114,19 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     status_.setContent(StatusAsString(status, connecting));
     if (status == WL_CONNECTED) {
       button_connect_.setCaption("Disconnect");
-      button_connect_.setIcon(ic_filled_24_content_clear());
+      button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       button_connect_.setColor(theme().color.primary);
       button_connect_.setOnClicked([this]() { disconnect(); });
     } else if (connecting) {
       button_connect_.setCaption("Connecting...");
-      button_connect_.setIcon(ic_filled_24_content_clear());
+      button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       roo_display::Color disabled = theme().color.onSurface;
       disabled.set_a(0x20);
       button_connect_.setColor(disabled);
       button_connect_.setOnClicked(nullptr);
     } else {
       button_connect_.setCaption("Connect");
-      button_connect_.setIcon(ic_filled_24_notification_wifi());
+      button_connect_.setIcon(SCALED_ROO_ICON(filled, notification_wifi));
       button_connect_.setColor(theme().color.primary);
       button_connect_.setOnClicked([this]() { connect(); });
     }
@@ -132,7 +139,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
 
   Controller& wifi_model_;
   ActivityTitle title_;
-  roo_windows::WifiIndicator36x36 indicator_;
+  roo_windows::WifiIndicatorLarge indicator_;
   roo_windows::Icon edit_;
   roo_windows::TextLabel ssid_;
   roo_windows::TextLabel status_;

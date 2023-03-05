@@ -10,7 +10,7 @@
 #include "roo_windows/containers/scrollable_panel.h"
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
-#include "roo_windows/indicators/24/wifi.h"
+#include "roo_windows/indicators/wifi.h"
 #include "roo_windows/widgets/blank.h"
 #include "roo_windows/widgets/divider.h"
 #include "roo_windows/widgets/icon.h"
@@ -50,7 +50,7 @@ class WifiListItem : public roo_windows::HorizontalLayout {
  private:
   bool isOpen() const { return is_open_; }
 
-  roo_windows::WifiIndicator24x24 icon_;
+  roo_windows::WifiIndicator icon_;
   roo_windows::TextLabel ssid_;
   bool is_open_;
   roo_windows::Icon lock_icon_;
@@ -121,7 +121,7 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
   }
 
  private:
-  roo_windows::WifiIndicator24x24 indicator_;
+  roo_windows::WifiIndicator indicator_;
   roo_windows::TextLabel ssid_;
   roo_windows::TextLabel status_;
   roo_windows::VerticalLayout ssid_status_;
