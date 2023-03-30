@@ -90,7 +90,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
         roo_windows::PreferredSize::WrapContentHeight());
   }
 
-  void enter(const std::string& ssid) { ssid_.setContent(ssid); }
+  void enter(const std::string& ssid) { ssid_.setText(ssid); }
 
   void onDetailsChanged(int16_t rssi, ConnectionStatus status,
                         bool connecting) {
@@ -111,7 +111,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
         break;
       }
     }
-    status_.setContent(StatusAsString(status, connecting));
+    status_.setText(StatusAsString(status, connecting));
     if (status == WL_CONNECTED) {
       button_connect_.setCaption("Disconnect");
       button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));

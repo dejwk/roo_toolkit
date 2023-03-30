@@ -18,7 +18,7 @@ class ActivityTitle : public roo_windows::HorizontalLayout {
         roo_windows::PreferredSize::WrapContentHeight());
   }
 
-  void setTitle(roo_display::StringView ssid) { label_.setContent(ssid); }
+  void setTitle(roo_display::StringView ssid) { label_.setText(ssid); }
 
  private:
   roo_windows::Icon back_;

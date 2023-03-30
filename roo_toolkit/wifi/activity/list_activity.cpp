@@ -55,7 +55,7 @@ WifiListItem::WifiListItem(const WifiListItem& other)
 
 // Sets this item to show the specified network.
 void WifiListItem::set(const Controller::Network& network) {
-  ssid_.setContent(network.ssid);
+  ssid_.setText(network.ssid);
   icon_.setWifiSignalStrength(network.rssi);
   lock_icon_.setVisibility(network.open ? INVISIBLE : VISIBLE);
 }
@@ -133,7 +133,7 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
 void CurrentNetwork::onChange(const Controller& model) {
   const Controller::Network& current = model.currentNetwork();
   indicator_.setWifiSignalStrength(current.rssi);
-  ssid_.setContent(current.ssid);
+  ssid_.setText(current.ssid);
   switch (model.currentNetworkStatus()) {
     case WL_CONNECTED: {
       indicator_.setConnectionStatus(roo_windows::WifiIndicator::CONNECTED);
@@ -149,7 +149,7 @@ void CurrentNetwork::onChange(const Controller& model) {
       break;
     }
   }
-  status_.setContent(
+  status_.setText(
       StatusAsString(model.currentNetworkStatus(), model.isConnecting()));
 }
 
