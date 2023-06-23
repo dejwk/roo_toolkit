@@ -5,6 +5,9 @@
 #include "Preferences.h"
 #include "WiFi.h"
 #include "roo_scheduler.h"
+
+#include "roo_prefs.h"
+
 #include "roo_toolkit/wifi/hal/controller.h"
 #include "roo_toolkit/wifi/hal/interface.h"
 #include "roo_toolkit/wifi/hal/store.h"
@@ -14,11 +17,9 @@ namespace wifi {
 
 class ArduinoPreferencesStore : public Store {
  public:
-  ArduinoPreferencesStore() : preferences_() {}
+  ArduinoPreferencesStore() : collection_("roo/t/wifi") {}
 
-  void begin() { preferences_.begin("roo/t/wifi", false); }
-
-  ~ArduinoPreferencesStore() { preferences_.end(); }
+  void begin() {}
 
   bool getIsInterfaceEnabled() override;
 
@@ -36,7 +37,7 @@ class ArduinoPreferencesStore : public Store {
   void clearPassword(const std::string& ssid) override;
 
  private:
-  Preferences preferences_;
+  roo_prefs::Collection collection_;
 };
 
 }  // namespace wifi

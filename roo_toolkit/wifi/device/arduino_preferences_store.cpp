@@ -31,45 +31,54 @@ void ToSsiPwdKey(const std::string& ssid, char* result) {
 }  // namespace
 
 bool ArduinoPreferencesStore::getIsInterfaceEnabled() {
-  return preferences_.getBool("enabled", false);
+  roo_prefs::Transaction t(collection_, true);
+  return t.store().getBool("enabled", false);
 }
 
 void ArduinoPreferencesStore::setIsInterfaceEnabled(bool enabled) {
-  preferences_.putBool("enabled", enabled);
+  roo_prefs::Transaction t(collection_);
+  t.store().putBool("enabled", enabled);
 }
 
 std::string ArduinoPreferencesStore::getDefaultSSID() {
-  if (!preferences_.isKey("ssid")) return "";
-  char result[33];
-  preferences_.getString("ssid", result, 33);
-  return std::string(result);
+  roo_prefs::Transaction t(collection_, true);
+  if (!t.store().isKey("ssid")) {
+    return "";
+  }
+  char buf[33];
+  t.store().getString("ssid", buf, 33);
+  return std::string(buf);
 }
 
 void ArduinoPreferencesStore::setDefaultSSID(const std::string& ssid) {
-  preferences_.putString("ssid", ssid.c_str());
+  roo_prefs::Transaction t(collection_);
+  t.store().putString("ssid", ssid.c_str());
 }
 
 bool ArduinoPreferencesStore::getPassword(const std::string& ssid, std::string& password) {
+  roo_prefs::Transaction t(collection_, true);
   char pwkey[16];
   ToSsiPwdKey(ssid, pwkey);
-  if (!preferences_.isKey(pwkey)) return false;
+  if (!t.store().isKey(pwkey)) return false;
   char pwd[128];
-  size_t len = preferences_.getString(pwkey, pwd, 128);
+  size_t len = t.store().getString(pwkey, pwd, 128);
   password = std::string(pwd, len);
   return true;
 }
 
 void ArduinoPreferencesStore::setPassword(const std::string& ssid,
                                const std::string& password) {
+  roo_prefs::Transaction t(collection_);
   char pwkey[16];
   ToSsiPwdKey(ssid, pwkey);
-  preferences_.putString(pwkey, password.c_str());
+  t.store().putString(pwkey, password.c_str());
 }
 
 void ArduinoPreferencesStore::clearPassword(const std::string& ssid) {
+  roo_prefs::Transaction t(collection_);
   char pwkey[16];
   ToSsiPwdKey(ssid, pwkey);
-  preferences_.remove(pwkey);
+  t.store().remove(pwkey);
 }
 
 }  // namespace wifi

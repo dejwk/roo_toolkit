@@ -22,6 +22,7 @@ cc_library(
         "//lib/roo_windows",
         "//lib/roo_glog",
         "//lib/roo_material_icons",
+        "//lib/roo_prefs",
         "//lib/roo_time",
         "//lib/roo_scheduler",
     ],
