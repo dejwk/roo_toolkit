@@ -5,6 +5,7 @@
 #include "roo_scheduler.h"
 #include "roo_windows/config.h"
 
+#include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/activity/wifi.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
@@ -76,7 +77,7 @@ Enable::Enable(const roo_windows::Environment& env, Controller& model)
       model_(model),
       gap_(env, roo_windows::Dimensions(ROO_WINDOWS_ICON_SIZE,
                                         ROO_WINDOWS_ICON_SIZE)),
-      label_(env, "Enable Wi-Fi", roo_windows::font_subtitle1(),
+      label_(env, kStrEnableWiFi, roo_windows::font_subtitle1(),
              roo_display::kLeft | roo_display::kMiddle),
       switch_(env) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
@@ -106,7 +107,7 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
       indicator_(env),
       ssid_(env, "", roo_windows::font_subtitle1(),
             roo_display::kLeft | roo_display::kMiddle),
-      status_(env, "Disconnected", roo_windows::font_caption(),
+      status_(env, kStrStatusDisconnected, roo_windows::font_caption(),
               roo_display::kLeft | roo_display::kMiddle),
       ssid_status_(env),
       on_click_(on_click) {
@@ -158,7 +159,7 @@ ListActivityContents::ListActivityContents(
     NetworkSelectedFn network_selected_fn)
     : VerticalLayout(env),
       wifi_model_(wifi_model),
-      title_(env, "WiFi"),
+      title_(env, kStrWiFi),
       enable_(env, wifi_model),
       progress_(env),
       current_(env, network_selected_fn),

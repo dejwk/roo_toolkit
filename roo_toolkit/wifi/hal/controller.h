@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "roo_toolkit/wifi/activity/resources.h"
+
 #include "roo_toolkit/wifi/hal/interface.h"
 #include "roo_toolkit/wifi/hal/store.h"
 
@@ -429,14 +431,14 @@ class Controller {
 inline const char* StatusAsString(ConnectionStatus status, bool connecting) {
   return (connecting &&
           (status == WL_DISCONNECTED || status == WL_NO_SSID_AVAIL))
-             ? "Connecting"
-         : (status == WL_IDLE_STATUS)     ? "Connected, no Internet"
-         : (status == WL_NO_SSID_AVAIL)   ? "Out of range"
-         : (status == WL_CONNECTED)       ? "Connected"
-         : (status == WL_CONNECT_FAILED)  ? "Check password and try again"
-         : (status == WL_CONNECTION_LOST) ? "Connection lost"
-         : (status == WL_DISCONNECTED)    ? "Disconnected"
-                                          : "Unknown";
+             ? kStrStatusConnecting
+         : (status == WL_IDLE_STATUS)     ? kStrStatusConnectedNoInternet
+         : (status == WL_NO_SSID_AVAIL)   ? kStrStatusOutOfRange
+         : (status == WL_CONNECTED)       ? kStrStatusConnected
+         : (status == WL_CONNECT_FAILED)  ? kStrStatusBadPassword
+         : (status == WL_CONNECTION_LOST) ? kStrStatusConnectionLost
+         : (status == WL_DISCONNECTED)    ? kStrStatusDisconnected
+                                          : kStrStatusUnknown;
 }
 
 }  // namespace wifi

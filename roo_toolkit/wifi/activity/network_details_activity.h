@@ -16,6 +16,7 @@
 #include "roo_material_icons/filled/48/notification.h"
 
 #include "roo_toolkit/menu/title.h"
+#include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/stacked_layout.h"
@@ -42,7 +43,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
                                  std::function<void()> edit_fn)
       : roo_windows::VerticalLayout(env),
         wifi_model_(model),
-        title_(env, "Network details"),
+        title_(env, kStrNetworkDetails),
         edit_(env, SCALED_ROO_ICON(filled, content_create)),
         indicator_(env),
         ssid_(env, "", roo_windows::font_subtitle1(),
@@ -51,9 +52,9 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
                 roo_display::kCenter | roo_display::kMiddle),
         d1_(env),
         actions_(env),
-        button_forget_(env, SCALED_ROO_ICON(filled, action_delete), "Forget"),
+        button_forget_(env, SCALED_ROO_ICON(filled, action_delete), kStrForget),
         button_connect_(env, SCALED_ROO_ICON(filled, notification_wifi),
-                        "Connect") {
+                        kStrConnect) {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
     edit_.setOnClicked(edit_fn);
@@ -113,19 +114,19 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     }
     status_.setText(StatusAsString(status, connecting));
     if (status == WL_CONNECTED) {
-      button_connect_.setCaption("Disconnect");
+      button_connect_.setCaption(kStrDisconnect);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       button_connect_.setColor(theme().color.primary);
       button_connect_.setOnClicked([this]() { disconnect(); });
     } else if (connecting) {
-      button_connect_.setCaption("Connecting...");
+      button_connect_.setCaption(kStrConnectingEllipsis);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       roo_display::Color disabled = theme().color.onSurface;
       disabled.set_a(0x20);
       button_connect_.setColor(disabled);
       button_connect_.setOnClicked(nullptr);
     } else {
-      button_connect_.setCaption("Connect");
+      button_connect_.setCaption(kStrConnect);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, notification_wifi));
       button_connect_.setColor(theme().color.primary);
       button_connect_.setOnClicked([this]() { connect(); });

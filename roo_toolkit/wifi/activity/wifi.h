@@ -100,14 +100,14 @@ class WifiSetup {
       return;
     }
     if (need_password) {
-      enter_password_.enter(task, ssid, "enter password");
+      enter_password_.enter(task, ssid, kStrEnterPassword);
     } else {
       details_.enter(task, ssid);
     }
   }
 
   void networkEdited(roo_windows::Task& task, const std::string& ssid) {
-    enter_password_.enter(task, ssid, "(unchanged)");
+    enter_password_.enter(task, ssid, kStrPasswordUnchanged);
   }
 
   Controller& controller_;
