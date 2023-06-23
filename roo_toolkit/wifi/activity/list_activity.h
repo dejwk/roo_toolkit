@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "roo_scheduler.h"
-#include "roo_toolkit/wifi/activity/activity_title.h"
+#include "roo_toolkit/menu/title.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
@@ -147,7 +147,7 @@ class ListActivityContents : public roo_windows::VerticalLayout {
 
  private:
   Controller& wifi_model_;
-  ActivityTitle title_;
+  roo_toolkit::menu::Title title_;
   Enable enable_;
   roo_windows::ProgressBar progress_;
   CurrentNetwork current_;

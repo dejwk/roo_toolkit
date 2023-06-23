@@ -2,7 +2,7 @@
 
 // #include "roo_material_icons/outlined/24/navigation.h"
 // #include "roo_smooth_fonts/NotoSans_Regular/18.h"
-#include "roo_toolkit/wifi/activity/activity_title.h"
+#include "roo_toolkit/menu/title.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
@@ -85,7 +85,7 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
   }
 
   void enter(roo_display::StringView ssid, const roo_display::StringView hint) {
-    title_.setTitle(ssid);
+    title_.setTitle(std::string((const char*)ssid.data(), ssid.size()));
     pwbar_.edit(hint);
   }
 
@@ -94,7 +94,7 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
   const std::string& passwd() const { return pwbar_.passwd(); }
 
  private:
-  ActivityTitle title_;
+  roo_toolkit::menu::Title title_;
   PasswordBar pwbar_;
 };
 

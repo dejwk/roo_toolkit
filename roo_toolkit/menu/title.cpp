@@ -1,21 +1,19 @@
-#include "roo_toolkit/wifi/activity/activity_title.h"
+#include "roo_toolkit/menu/title.h"
 
 #include "roo_material_icons/outlined/18/navigation.h"
 #include "roo_material_icons/outlined/24/navigation.h"
 #include "roo_material_icons/outlined/36/navigation.h"
 #include "roo_material_icons/outlined/48/navigation.h"
 
-// #include "roo_smooth_fonts/NotoSans_CondensedBold/18.h"
 #include "roo_windows/core/task.h"
 
 namespace roo_toolkit {
-namespace wifi {
+namespace menu {
 
-ActivityTitle::ActivityTitle(const roo_windows::Environment& env,
-                             const std::string& title)
+Title::Title(const roo_windows::Environment& env, std::string title)
     : HorizontalLayout(env),
       back_(env, SCALED_ROO_ICON(outlined, navigation_arrow_back)),
-      label_(env, title, roo_windows::font_h6(),
+      label_(env, std::move(title), roo_windows::font_h6(),
              roo_display::kLeft | roo_display::kMiddle) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
@@ -26,5 +24,5 @@ ActivityTitle::ActivityTitle(const roo_windows::Environment& env,
   back_.setOnClicked([&]() { getTask()->exitActivity(); });
 }
 
-}  // namespace wifi
+}  // namespace menu
 }  // namespace roo_toolkit

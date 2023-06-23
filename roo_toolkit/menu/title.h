@@ -1,16 +1,18 @@
 #pragma once
 
+#include <string>
+
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_label.h"
 
 namespace roo_toolkit {
-namespace wifi {
+namespace menu {
 
 // The title of the activity, with the back button.
-class ActivityTitle : public roo_windows::HorizontalLayout {
+class Title : public roo_windows::HorizontalLayout {
  public:
-  ActivityTitle(const roo_windows::Environment& env, const std::string& title);
+  Title(const roo_windows::Environment& env, std::string title);
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
@@ -18,12 +20,12 @@ class ActivityTitle : public roo_windows::HorizontalLayout {
         roo_windows::PreferredSize::WrapContentHeight());
   }
 
-  void setTitle(roo_display::StringView ssid) { label_.setText(ssid); }
+  void setTitle(std::string title) { label_.setText(std::move(title)); }
 
  private:
   roo_windows::Icon back_;
   roo_windows::TextLabel label_;
 };
 
-}  // namespace wifi
+}  // namespace menu
 }  // namespace roo_toolkit

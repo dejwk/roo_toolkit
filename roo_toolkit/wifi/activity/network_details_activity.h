@@ -15,7 +15,7 @@
 #include "roo_material_icons/filled/36/notification.h"
 #include "roo_material_icons/filled/48/notification.h"
 
-#include "roo_toolkit/wifi/activity/activity_title.h"
+#include "roo_toolkit/menu/title.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/stacked_layout.h"
@@ -138,7 +138,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
   void disconnect() { wifi_model_.disconnect(); }
 
   Controller& wifi_model_;
-  ActivityTitle title_;
+  roo_toolkit::menu::Title title_;
   roo_windows::WifiIndicatorLarge indicator_;
   roo_windows::Icon edit_;
   roo_windows::TextLabel ssid_;
