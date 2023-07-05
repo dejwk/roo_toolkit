@@ -57,7 +57,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
                         kStrConnect) {
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityCenter,
                                     roo_windows::kVerticalGravityMiddle));
-    edit_.setOnClicked(edit_fn);
+    edit_.setOnInteractiveChange(edit_fn);
     title_.add(edit_, roo_windows::HorizontalLayout::Params());
     add(title_, VerticalLayout::Params().setGravity(
                     roo_windows::kHorizontalGravityLeft));
@@ -117,19 +117,19 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
       button_connect_.setCaption(kStrDisconnect);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       button_connect_.setColor(theme().color.primary);
-      button_connect_.setOnClicked([this]() { disconnect(); });
+      button_connect_.setOnInteractiveChange([this]() { disconnect(); });
     } else if (connecting) {
       button_connect_.setCaption(kStrConnectingEllipsis);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, content_clear));
       roo_display::Color disabled = theme().color.onSurface;
       disabled.set_a(0x20);
       button_connect_.setColor(disabled);
-      button_connect_.setOnClicked(nullptr);
+      button_connect_.setOnInteractiveChange(nullptr);
     } else {
       button_connect_.setCaption(kStrConnect);
       button_connect_.setIcon(SCALED_ROO_ICON(filled, notification_wifi));
       button_connect_.setColor(theme().color.primary);
-      button_connect_.setOnClicked([this]() { connect(); });
+      button_connect_.setOnInteractiveChange([this]() { connect(); });
     }
   }
 

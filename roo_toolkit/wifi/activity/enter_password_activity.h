@@ -45,13 +45,13 @@ class PasswordBar : public roo_windows::HorizontalLayout {
     text_.setMargins(roo_windows::MARGIN_NONE);
     text_.setPadding(roo_windows::PADDING_TINY);
     visibility_.setOff();
-    visibility_.setOnClicked([this]() { visibilityChanged(); });
+    visibility_.setOnInteractiveChange([this]() { visibilityChanged(); });
     setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                     roo_windows::kVerticalGravityMiddle));
     add(visibility_, HorizontalLayout::Params());
     add(text_, HorizontalLayout::Params().setWeight(1));
     add(enter_, HorizontalLayout::Params());
-    enter_.setOnClicked(confirm_fn);
+    enter_.setOnInteractiveChange(confirm_fn);
   }
 
   void edit(roo_display::StringView hint) {

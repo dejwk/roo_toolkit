@@ -21,7 +21,7 @@ Title::Title(const roo_windows::Environment& env, std::string title)
   label_.setPadding(roo_windows::PADDING_TINY);
   add(back_, roo_windows::HorizontalLayout::Params());
   add(label_, roo_windows::HorizontalLayout::Params().setWeight(1));
-  back_.setOnClicked([&]() { getTask()->exitActivity(); });
+  back_.setOnInteractiveChange([&]() { getTask()->exitActivity(); });
 }
 
 }  // namespace menu

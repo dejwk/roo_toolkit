@@ -18,7 +18,7 @@ BasicNavigationItem::BasicNavigationItem(const roo_windows::Environment& env,
   label_.setPadding(roo_windows::PADDING_TINY);
   add(label_, HorizontalLayout::Params().setWeight(1));
 
-  setOnClicked([&]() { getTask()->enterActivity(&target_); });
+  setOnInteractiveChange([&]() { getTask()->enterActivity(&target_); });
 }
 
 }  // namespace menu

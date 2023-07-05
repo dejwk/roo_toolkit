@@ -92,7 +92,7 @@ Enable::Enable(const roo_windows::Environment& env, Controller& model)
   disabled_color_.set_a(0xC0);
   disabled_color_ = env.theme().color.onSurface;
   disabled_color_.set_a(0x40);
-  switch_.setOnClicked([&]() { model_.toggleEnabled(); });
+  switch_.setOnInteractiveChange([&]() { model_.toggleEnabled(); });
   setBackground(disabled_color_);
 }
 
