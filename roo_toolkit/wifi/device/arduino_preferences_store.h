@@ -27,6 +27,8 @@ class ArduinoPreferencesStore : public Store {
 
   std::string getDefaultSSID() override;
 
+  void clearDefaultSSID() override;
+
   void setDefaultSSID(const std::string& ssid) override;
 
   bool getPassword(const std::string& ssid, std::string& password) override;

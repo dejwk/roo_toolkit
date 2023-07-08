@@ -55,6 +55,11 @@ void ArduinoPreferencesStore::setDefaultSSID(const std::string& ssid) {
   t.store().putString("ssid", ssid.c_str());
 }
 
+void ArduinoPreferencesStore::clearDefaultSSID() {
+  roo_prefs::Transaction t(collection_);
+  t.store().remove("ssid");
+}
+
 bool ArduinoPreferencesStore::getPassword(const std::string& ssid, std::string& password) {
   roo_prefs::Transaction t(collection_, true);
   char pwkey[16];

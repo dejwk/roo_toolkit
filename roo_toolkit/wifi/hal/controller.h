@@ -250,6 +250,13 @@ class Controller {
     interface_.disconnect();
   }
 
+  void forget(const std::string& ssid) {
+    store_.clearPassword(ssid);
+    if (ssid == store_.getDefaultSSID()) {
+      store_.clearDefaultSSID();
+    }
+  }
+
  private:
   class WifiListener : public Interface::EventListener {
    public:

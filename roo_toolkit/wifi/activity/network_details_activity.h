@@ -1,23 +1,21 @@
 #pragma once
 
-#include "roo_windows/config.h"
-
 #include "roo_material_icons/filled/18/action.h"
-#include "roo_material_icons/filled/24/action.h"
-#include "roo_material_icons/filled/36/action.h"
-#include "roo_material_icons/filled/48/action.h"
 #include "roo_material_icons/filled/18/content.h"
-#include "roo_material_icons/filled/24/content.h"
-#include "roo_material_icons/filled/36/content.h"
-#include "roo_material_icons/filled/48/content.h"
 #include "roo_material_icons/filled/18/notification.h"
+#include "roo_material_icons/filled/24/action.h"
+#include "roo_material_icons/filled/24/content.h"
 #include "roo_material_icons/filled/24/notification.h"
+#include "roo_material_icons/filled/36/action.h"
+#include "roo_material_icons/filled/36/content.h"
 #include "roo_material_icons/filled/36/notification.h"
+#include "roo_material_icons/filled/48/action.h"
+#include "roo_material_icons/filled/48/content.h"
 #include "roo_material_icons/filled/48/notification.h"
-
 #include "roo_toolkit/menu/title.h"
 #include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
+#include "roo_windows/config.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/stacked_layout.h"
 #include "roo_windows/containers/vertical_layout.h"
@@ -72,8 +70,11 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
     add(d1_, VerticalLayout::Params().setWeight(1));
     indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
     actions_.setUseLargestChild(true);
-    button_forget_.setPadding(roo_windows::PADDING_LARGE, roo_windows::PADDING_SMALL);
-    button_connect_.setPadding(roo_windows::PADDING_LARGE, roo_windows::PADDING_SMALL);
+    button_forget_.setPadding(roo_windows::PADDING_LARGE,
+                              roo_windows::PADDING_SMALL);
+    button_forget_.setOnInteractiveChange([this]() { forget(); });
+    button_connect_.setPadding(roo_windows::PADDING_LARGE,
+                               roo_windows::PADDING_SMALL);
     roo_display::Color pri = env.theme().color.primary;
     button_forget_.setColor(pri);
     button_connect_.setColor(pri);
@@ -137,6 +138,12 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
   void connect() { wifi_model_.connect(); }
 
   void disconnect() { wifi_model_.disconnect(); }
+
+  void forget() {
+    disconnect();
+    wifi_model_.forget(ssid_.content());
+    getTask()->exitActivity();
+  }
 
   Controller& wifi_model_;
   roo_toolkit::menu::Title title_;
