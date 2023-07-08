@@ -125,6 +125,7 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
   roo_windows::TextLabel ssid_;
   roo_windows::TextLabel status_;
   roo_windows::VerticalLayout ssid_status_;
+  roo_windows::Icon lock_icon_;
   NetworkSelectedFn on_click_;
 };
 

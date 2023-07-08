@@ -3,10 +3,9 @@
 #include "roo_material_icons/filled/24/action.h"
 #include "roo_material_icons/outlined/24/navigation.h"
 #include "roo_scheduler.h"
-#include "roo_windows/config.h"
-
 #include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/activity/wifi.h"
+#include "roo_windows/config.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
 #include "roo_windows/containers/scrollable_panel.h"
@@ -110,6 +109,7 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
       status_(env, kStrStatusDisconnected, roo_windows::font_caption(),
               roo_display::kLeft | roo_display::kMiddle),
       ssid_status_(env),
+      lock_icon_(env, SCALED_ROO_ICON(filled, action_lock)),
       on_click_(on_click) {
   setGravity(roo_windows::Gravity(roo_windows::kHorizontalGravityNone,
                                   roo_windows::kVerticalGravityMiddle));
@@ -122,12 +122,13 @@ CurrentNetwork::CurrentNetwork(const roo_windows::Environment& env,
   status_.setMargins(roo_windows::MARGIN_NONE);
   ssid_status_.setPadding(roo_windows::Padding(roo_windows::PADDING_NONE,
                                                roo_windows::PADDING_NONE));
-  ssid_status_.setMargins(roo_windows::Margins(roo_windows::MARGIN_NONE,
-                                               roo_windows::MARGIN_NONE));
+  ssid_status_.setMargins(
+      roo_windows::Margins(roo_windows::MARGIN_NONE, roo_windows::MARGIN_NONE));
   // ssid_status_.setMargins(roo_windows::MARGIN_REGULAR);
   ssid_status_.add(ssid_, roo_windows::VerticalLayout::Params());
   ssid_status_.add(status_, roo_windows::VerticalLayout::Params());
   add(ssid_status_, HorizontalLayout::Params().setWeight(1));
+  add(lock_icon_, HorizontalLayout::Params());
   indicator_.setConnectionStatus(roo_windows::WifiIndicator::DISCONNECTED);
 }
 
@@ -152,6 +153,7 @@ void CurrentNetwork::onChange(const Controller& model) {
   }
   status_.setText(
       StatusAsString(model.currentNetworkStatus(), model.isConnecting()));
+  lock_icon_.setVisibility(model.currentNetwork().open ? INVISIBLE : VISIBLE);
 }
 
 ListActivityContents::ListActivityContents(
