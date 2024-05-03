@@ -201,7 +201,7 @@ class Controller {
   void resume() {
     if (!enabled_) return;
     refreshCurrentNetwork();
-    if (!refresh_current_network_.isScheduled()) {
+    if (!refresh_current_network_.is_scheduled()) {
       refresh_current_network_.scheduleAfter(roo_time::Seconds(2));
     }
     if (interface_.scanCompleted()) {

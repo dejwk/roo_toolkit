@@ -1,7 +1,7 @@
 #include "roo_toolkit/wifi/activity/list_activity.h"
 
-#include "roo_material_icons/filled/24/action.h"
-#include "roo_material_icons/outlined/24/navigation.h"
+#include "roo_icons/filled/24/action.h"
+#include "roo_icons/outlined/24/navigation.h"
 #include "roo_scheduler.h"
 #include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/activity/wifi.h"

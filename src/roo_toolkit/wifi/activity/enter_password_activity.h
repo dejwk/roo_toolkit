@@ -10,10 +10,7 @@
 #include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_field.h"
 
-#include "roo_material_icons/outlined/18/navigation.h"
-#include "roo_material_icons/outlined/24/navigation.h"
-#include "roo_material_icons/outlined/36/navigation.h"
-#include "roo_material_icons/outlined/48/navigation.h"
+#include "roo_icons/outlined/navigation.h"
 
 namespace roo_toolkit {
 namespace wifi {
