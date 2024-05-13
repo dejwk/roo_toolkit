@@ -25,7 +25,7 @@ cc_library(
         "//lib/roo_prefs",
         "//lib/roo_time",
         "//lib/roo_scheduler",
-        "//lib/roo_onewire_thermometers",
+        "//lib/roo_onewire",
     ],
 )
 
