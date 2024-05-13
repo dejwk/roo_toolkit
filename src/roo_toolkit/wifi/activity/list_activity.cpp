@@ -63,11 +63,11 @@ void WifiListItem::set(const Controller::Network& network) {
 WifiListModel::WifiListModel(Controller& wifi_model)
     : wifi_model_(wifi_model) {}
 
-int WifiListModel::elementCount() {
+int WifiListModel::elementCount() const {
   return wifi_model_.otherScannedNetworksCount();
 }
 
-void WifiListModel::set(int idx, WifiListItem& dest) {
+void WifiListModel::set(int idx, WifiListItem& dest) const {
   dest.set(wifi_model_.otherNetwork(idx));
 }
 

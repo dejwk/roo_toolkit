@@ -61,8 +61,8 @@ class WifiListModel : public roo_windows::ListModel<WifiListItem> {
  public:
   WifiListModel(Controller& wifi_model);
 
-  int elementCount() override;
-  void set(int idx, WifiListItem& dest);
+  int elementCount() const override;
+  void set(int idx, WifiListItem& dest) const override;
 
  private:
   Controller& wifi_model_;
