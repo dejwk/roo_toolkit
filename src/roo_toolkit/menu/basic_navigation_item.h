@@ -19,6 +19,8 @@ class BasicNavigationItem : public roo_windows::HorizontalLayout {
                       roo_display::StringView text,
                       roo_windows::Activity& target);
 
+  bool isClickable() const override { return true; }
+
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
         roo_windows::PreferredSize::MatchParentWidth(),
