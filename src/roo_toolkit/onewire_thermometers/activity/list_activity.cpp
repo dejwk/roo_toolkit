@@ -32,14 +32,10 @@ ThermometerListItem::ThermometerListItem(const ThermometerListItem& other)
       thermometer_icon_(other.thermometer_icon_),
       name_(other.name_),
       reading_(other.reading_),
-      //   ssid_(other.ssid_),
-      //   lock_icon_(other.lock_icon_),
       on_click_(other.on_click_) {
   add(thermometer_icon_);
   add(name_, HorizontalLayout::Params().setWeight(1));
   add(reading_, HorizontalLayout::Params().setWeight(1));
-  //   add(ssid_, HorizontalLayout::Params().setWeight(1));
-  //   add(lock_icon_, HorizontalLayout::Params());
 }
 
 // Sets this item to show the specified network.
@@ -55,9 +51,6 @@ void ThermometerListItem::set(const roo_onewire::ThermometerRole& thermometer) {
   }
   thermometer_icon_.setVisibility(thermometer.isAssigned() ? VISIBLE
                                                            : INVISIBLE);
-  //   ssid_.setText(network.ssid);
-  //   icon_.setWifiSignalStrength(network.rssi);
-  //   lock_icon_.setVisibility(network.open ? INVISIBLE : VISIBLE);
 }
 
 ThermometerListModel::ThermometerListModel(roo_onewire::ThermometerRoles& model)
