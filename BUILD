@@ -20,11 +20,12 @@ cc_library(
         "//roo_testing/frameworks/arduino-esp32-2.0.4/libraries/WiFi",
         "//lib/roo_display",
         "//lib/roo_windows",
-        "//lib/roo_glog",
-        "//lib/roo_material_icons",
+        "//lib/roo_logging",
+        "//lib/roo_icons",
         "//lib/roo_prefs",
         "//lib/roo_time",
         "//lib/roo_scheduler",
+        "//lib/roo_onewire_thermometers",
     ],
 )
 
