@@ -3,7 +3,7 @@
 #include "roo_icons/filled/action.h"
 #include "roo_icons/filled/content.h"
 #include "roo_icons/filled/notification.h"
-#include "roo_toolkit/menu/title.h"
+#include "roo_windows/composites/menu/title.h"
 #include "roo_toolkit/wifi/activity/resources.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
 #include "roo_windows/config.h"
@@ -137,7 +137,7 @@ class NetworkDetailsActivityContents : public roo_windows::VerticalLayout {
   }
 
   Controller& wifi_model_;
-  roo_toolkit::menu::Title title_;
+  roo_windows::menu::Title title_;
   roo_windows::WifiIndicatorLarge indicator_;
   roo_windows::Icon edit_;
   roo_windows::TextLabel ssid_;

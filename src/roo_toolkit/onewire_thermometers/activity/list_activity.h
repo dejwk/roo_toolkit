@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "roo_scheduler.h"
-#include "roo_toolkit/menu/title.h"
+#include "roo_windows/composites/menu/title.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
 #include "roo_windows/containers/scrollable_panel.h"
@@ -94,7 +94,7 @@ class ListActivityContents
   void conversionCompleted() override;
 
   roo_onewire::ThermometerRoles& model_;
-  roo_toolkit::menu::Title title_;
+  roo_windows::menu::Title title_;
   ThermometerListModel list_model_;
   ThermometerList list_;
 };

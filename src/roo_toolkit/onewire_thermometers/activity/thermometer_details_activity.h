@@ -4,7 +4,7 @@
 #include "roo_icons/filled/content.h"
 #include "roo_icons/filled/notification.h"
 #include "roo_onewire/thermometer_roles.h"
-#include "roo_toolkit/menu/title.h"
+#include "roo_windows/composites/menu/title.h"
 #include "roo_toolkit/onewire_thermometers/activity/resources.h"
 #include "roo_windows/config.h"
 #include "roo_windows/containers/horizontal_layout.h"
@@ -125,7 +125,7 @@ class ThermometerDetailsActivityContents
 
   roo_onewire::ThermometerRoles& model_;
   int id_;
-  roo_toolkit::menu::Title title_;
+  roo_windows::menu::Title title_;
   roo_windows::TextLabel name_;
   roo_windows::TextLabel rom_code_;
   roo_windows::TextLabel reading_;

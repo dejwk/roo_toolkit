@@ -2,15 +2,14 @@
 
 // #include "roo_material_icons/outlined/24/navigation.h"
 // #include "roo_smooth_fonts/NotoSans_Regular/18.h"
-#include "roo_toolkit/menu/title.h"
+#include "roo_icons/outlined/navigation.h"
 #include "roo_toolkit/wifi/device/resolved_interface.h"
+#include "roo_windows/composites/menu/title.h"
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
 #include "roo_windows/core/task.h"
 #include "roo_windows/widgets/icon.h"
 #include "roo_windows/widgets/text_field.h"
-
-#include "roo_icons/outlined/navigation.h"
 
 namespace roo_toolkit {
 namespace wifi {
@@ -91,7 +90,7 @@ class EnterPasswordActivityContents : public roo_windows::VerticalLayout {
   const std::string& passwd() const { return pwbar_.passwd(); }
 
  private:
-  roo_toolkit::menu::Title title_;
+  roo_windows::menu::Title title_;
   PasswordBar pwbar_;
 };
 
