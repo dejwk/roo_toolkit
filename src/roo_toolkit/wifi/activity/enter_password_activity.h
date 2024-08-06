@@ -3,7 +3,7 @@
 // #include "roo_material_icons/outlined/24/navigation.h"
 // #include "roo_smooth_fonts/NotoSans_Regular/18.h"
 #include "roo_icons/outlined/navigation.h"
-#include "roo_toolkit/wifi/device/resolved_interface.h"
+#include "roo_wifi.h"
 #include "roo_windows/composites/menu/title.h"
 #include "roo_windows/containers/vertical_layout.h"
 #include "roo_windows/core/activity.h"
@@ -37,6 +37,7 @@ class PasswordBar : public roo_windows::HorizontalLayout {
         visibility_(env),
         text_(env, editor, confirm_fn),
         enter_(env, SCALED_ROO_ICON(outlined, navigation_check)) {
+    text_.setContent("");
     text_.setStarred(true);
     text_.setMargins(roo_windows::MARGIN_NONE);
     text_.setPadding(roo_windows::PADDING_TINY);
@@ -48,6 +49,12 @@ class PasswordBar : public roo_windows::HorizontalLayout {
     add(text_, HorizontalLayout::Params().setWeight(1));
     add(enter_, HorizontalLayout::Params());
     enter_.setOnInteractiveChange(confirm_fn);
+  }
+
+  roo_windows::PreferredSize getPreferredSize() const override {
+    return roo_windows::PreferredSize(
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
   }
 
   void edit(roo_display::StringView hint) {
@@ -98,7 +105,7 @@ class EnterPasswordActivity : public roo_windows::Activity {
  public:
   EnterPasswordActivity(const roo_windows::Environment& env,
                         roo_windows::TextFieldEditor& editor,
-                        Controller& wifi_model);
+                        roo_wifi::Controller& wifi_model);
 
   roo_windows::Widget& getContents() override { return contents_; }
 
@@ -117,7 +124,7 @@ class EnterPasswordActivity : public roo_windows::Activity {
 
   void confirm();
 
-  Controller& wifi_model_;
+  roo_wifi::Controller& wifi_model_;
   const std::string* ssid_;
   roo_windows::TextFieldEditor& editor_;
   EnterPasswordActivityContents contents_;

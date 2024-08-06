@@ -5,19 +5,17 @@
 #include "roo_toolkit/wifi/activity/enter_password_activity.h"
 #include "roo_toolkit/wifi/activity/list_activity.h"
 #include "roo_toolkit/wifi/activity/network_details_activity.h"
-#include "roo_toolkit/wifi/device/resolved_interface.h"
 
 namespace roo_toolkit {
 namespace wifi {
 
-class WifiSetup {
+class Configurator {
  public:
-  WifiSetup(const roo_windows::Environment& env, Controller& controller,
-            roo_windows::TextFieldEditor& editor,
-            roo_scheduler::Scheduler& scheduler)
+  Configurator(const roo_windows::Environment& env,
+               roo_wifi::Controller& controller,
+               roo_windows::TextFieldEditor& editor)
       : controller_(controller),
         model_listener_(*this),
-        // model_(controller, scheduler, model_listener_),
         list_(env, controller_,
               [this](roo_windows::Task& task, const std::string& ssid) {
                 networkSelected(task, ssid);
@@ -34,12 +32,12 @@ class WifiSetup {
 
   roo_windows::Activity& enter_password() { return enter_password_; }
 
-  ~WifiSetup() { controller_.removeListener(&model_listener_); }
+  ~Configurator() { controller_.removeListener(&model_listener_); }
 
  private:
-  class ModelListener : public Controller::Listener {
+  class ModelListener : public roo_wifi::Controller::Listener {
    public:
-    ModelListener(WifiSetup& wifi) : wifi_(wifi) {}
+    ModelListener(Configurator& wifi) : wifi_(wifi) {}
 
     void onEnableChanged(bool enabled) override {
       wifi_.onEnableChanged(enabled);
@@ -50,12 +48,13 @@ class WifiSetup {
 
     void onCurrentNetworkChanged() override { wifi_.onCurrentNetworkChanged(); }
 
-    void onConnectionStateChanged(Interface::EventType type) override {
+    void onConnectionStateChanged(
+        roo_wifi::Interface::EventType type) override {
       wifi_.onConnectionStateChanged(type);
     }
 
    private:
-    WifiSetup& wifi_;
+    Configurator& wifi_;
   };
 
   friend class ModelListener;
@@ -74,25 +73,26 @@ class WifiSetup {
     details_.onCurrentNetworkChanged();
   }
 
-  void onConnectionStateChanged(Interface::EventType type) {
+  void onConnectionStateChanged(roo_wifi::Interface::EventType type) {
     list_.onConnectionStateChanged(type);
     details_.onCurrentNetworkChanged();
   }
 
   void networkSelected(roo_windows::Task& task, const std::string& ssid) {
-    const Controller::Network* network = controller_.lookupNetwork(ssid);
+    const roo_wifi::Controller::Network* network =
+        controller_.lookupNetwork(ssid);
     std::string password;
     bool same_network = (ssid == controller_.currentNetwork().ssid);
     bool has_password = false;
     if (!same_network ||
-        controller_.currentNetworkStatus() != WL_CONNECT_FAILED) {
+        controller_.currentNetworkStatus() != roo_wifi::WL_CONNECT_FAILED) {
       has_password = controller_.getStoredPassword(ssid, password);
     }
     bool need_password =
         (network != nullptr && !network->open && !has_password);
     if (!need_password &&
         (!same_network ||
-         (controller_.currentNetworkStatus() == WL_DISCONNECTED &&
+         (controller_.currentNetworkStatus() == roo_wifi::WL_DISCONNECTED &&
           !controller_.isConnecting()))) {
       // Clicked on an open or remembered network to which we are not already
       // connected or connecting. Interpret as a pure 'action' intent.
@@ -110,7 +110,7 @@ class WifiSetup {
     enter_password_.enter(task, ssid, kStrPasswordUnchanged);
   }
 
-  Controller& controller_;
+  roo_wifi::Controller& controller_;
   ModelListener model_listener_;
   ListActivity list_;
   NetworkDetailsActivity details_;

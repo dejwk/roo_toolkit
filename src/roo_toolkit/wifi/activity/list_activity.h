@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "roo_scheduler.h"
-#include "roo_toolkit/wifi/device/resolved_interface.h"
+#include "roo_wifi.h"
 #include "roo_windows/composites/menu/title.h"
 #include "roo_windows/containers/horizontal_layout.h"
 #include "roo_windows/containers/list_layout.h"
@@ -37,7 +37,7 @@ class WifiListItem : public roo_windows::HorizontalLayout {
   bool isClickable() const override { return true; }
 
   // Sets this item to show the specified network.
-  void set(const Controller::Network& network);
+  void set(const roo_wifi::Controller::Network& network);
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
@@ -59,13 +59,13 @@ class WifiListItem : public roo_windows::HorizontalLayout {
 
 class WifiListModel : public roo_windows::ListModel<WifiListItem> {
  public:
-  WifiListModel(Controller& wifi_model);
+  WifiListModel(roo_wifi::Controller& wifi_model);
 
   int elementCount() const override;
   void set(int idx, WifiListItem& dest) const override;
 
  private:
-  Controller& wifi_model_;
+  roo_wifi::Controller& wifi_model_;
 };
 
 // The list of WiFi networks.
@@ -77,7 +77,7 @@ class WifiList : public roo_windows::ListLayout<WifiListItem> {
 // The main 'enable WiFi' bar.
 class Enable : public roo_windows::HorizontalLayout {
  public:
-  Enable(const roo_windows::Environment& env, Controller& model);
+  Enable(const roo_windows::Environment& env, roo_wifi::Controller& model);
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
@@ -92,7 +92,7 @@ class Enable : public roo_windows::HorizontalLayout {
   void onEnableChanged(bool enabled);
 
  private:
-  Controller& model_;
+  roo_wifi::Controller& model_;
 
   roo_windows::Blank gap_;
   roo_windows::TextLabel label_;
@@ -112,7 +112,7 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
 
   void onClicked() override { on_click_(*getTask(), ssid_.content()); }
 
-  void onChange(const Controller& model);
+  void onChange(const roo_wifi::Controller& model);
 
   roo_windows::PreferredSize getPreferredSize() const override {
     return roo_windows::PreferredSize(
@@ -133,7 +133,7 @@ class CurrentNetwork : public roo_windows::HorizontalLayout {
 class ListActivityContents : public roo_windows::VerticalLayout {
  public:
   ListActivityContents(const roo_windows::Environment& env,
-                       Controller& wifi_model,
+                       roo_wifi::Controller& wifi_model,
                        NetworkSelectedFn network_selected_fn);
 
   void onEnableChanged(bool enabled);
@@ -142,12 +142,18 @@ class ListActivityContents : public roo_windows::VerticalLayout {
   void onScanCompleted();
   void onCurrentNetworkChanged();
 
-  void onConnectionStateChanged(Interface::EventType type) {
+  void onConnectionStateChanged(roo_wifi::Interface::EventType type) {
     current_.onChange(wifi_model_);
   }
 
+  roo_windows::PreferredSize getPreferredSize() const override {
+    return roo_windows::PreferredSize(
+        roo_windows::PreferredSize::MatchParentWidth(),
+        roo_windows::PreferredSize::WrapContentHeight());
+  }
+
  private:
-  Controller& wifi_model_;
+  roo_wifi::Controller& wifi_model_;
   roo_windows::menu::Title title_;
   Enable enable_;
   roo_windows::ProgressBar progress_;
@@ -159,7 +165,8 @@ class ListActivityContents : public roo_windows::VerticalLayout {
 
 class ListActivity : public roo_windows::Activity {
  public:
-  ListActivity(const roo_windows::Environment& env, Controller& wifi_model,
+  ListActivity(const roo_windows::Environment& env,
+               roo_wifi::Controller& wifi_model,
                NetworkSelectedFn network_selected_fn);
 
   roo_windows::Widget& getContents() override { return scrollable_container_; }
@@ -168,7 +175,7 @@ class ListActivity : public roo_windows::Activity {
   void onStop() override;
 
  private:
-  friend class WifiSetup;
+  friend class Configurator;
 
   void startScan();
 
@@ -176,9 +183,9 @@ class ListActivity : public roo_windows::Activity {
   void onScanStarted();
   void onScanCompleted();
   void onCurrentNetworkChanged();
-  void onConnectionStateChanged(Interface::EventType type);
+  void onConnectionStateChanged(roo_wifi::Interface::EventType type);
 
-  Controller& wifi_model_;
+  roo_wifi::Controller& wifi_model_;
 
   ListActivityContents contents_;
   roo_windows::ScrollablePanel scrollable_container_;

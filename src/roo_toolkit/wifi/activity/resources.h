@@ -1,5 +1,7 @@
 #pragma once
 
+#include "roo_wifi.h"
+
 namespace roo_toolkit {
 namespace wifi {
 
@@ -23,6 +25,20 @@ extern const char* kStrStatusUnknown;
 
 extern const char* kStrEnterPassword;
 extern const char* kStrPasswordUnchanged;
+
+inline const char* StatusAsString(roo_wifi::ConnectionStatus status,
+                                  bool connecting) {
+  return (connecting && (status == roo_wifi::WL_DISCONNECTED ||
+                         status == roo_wifi::WL_NO_SSID_AVAIL))
+             ? kStrStatusConnecting
+         : (status == roo_wifi::WL_IDLE_STATUS) ? kStrStatusConnectedNoInternet
+         : (status == roo_wifi::WL_NO_SSID_AVAIL)   ? kStrStatusOutOfRange
+         : (status == roo_wifi::WL_CONNECTED)       ? kStrStatusConnected
+         : (status == roo_wifi::WL_CONNECT_FAILED)  ? kStrStatusBadPassword
+         : (status == roo_wifi::WL_CONNECTION_LOST) ? kStrStatusConnectionLost
+         : (status == roo_wifi::WL_DISCONNECTED)    ? kStrStatusDisconnected
+                                                    : kStrStatusUnknown;
+}
 
 }  // namespace wifi
 }  // namespace roo_toolkit

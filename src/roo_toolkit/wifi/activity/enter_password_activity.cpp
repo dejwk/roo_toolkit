@@ -21,7 +21,7 @@ void EditedPassword::onEditFinished(bool confirmed) {
 
 EnterPasswordActivity::EnterPasswordActivity(
     const roo_windows::Environment& env, roo_windows::TextFieldEditor& editor,
-    Controller& wifi_model)
+    roo_wifi::Controller& wifi_model)
     : roo_windows::Activity(),
       wifi_model_(wifi_model),
       ssid_(nullptr),

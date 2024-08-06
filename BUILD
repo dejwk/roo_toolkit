@@ -26,6 +26,7 @@ cc_library(
         "//lib/roo_time",
         "//lib/roo_scheduler",
         "//lib/roo_onewire",
+        "//lib/roo_wifi",
     ],
 )
 
